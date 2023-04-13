@@ -16,14 +16,16 @@ func bootServer(port uint16) {
 		http.HandleFunc(key, value)
 	}
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	log.Println("Server Open")
 	if errors.Is(err, http.ErrServerClosed) {
-		fmt.Printf("Server Closed\n")
+		log.Printf("Server Closed\n")
 	} else if err != nil {
-		fmt.Printf("Error while starting server: %s\n", err)
+		log.Printf("Error while starting server: %s\n", err)
 		os.Exit(1)
 	}
 }
 
 func main() {
+	printDatabase()
 	bootServer(4242)
 }

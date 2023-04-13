@@ -6,9 +6,6 @@ import (
 	"net/http"
 )
 
-var session = "session"
-var sessionTime = 60 * 60
-
 func parseRequestToStruct(r *http.Request, t any) error {
 	body := r.Body
 	defer body.Close()
