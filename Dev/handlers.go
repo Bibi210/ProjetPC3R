@@ -19,6 +19,7 @@ func Hello(w http.ResponseWriter, r *http.Request) {
 
 func Root(w http.ResponseWriter, r *http.Request) {
 	log.Printf("got %s request\n", r.URL)
+	w.Header().Set("Access-Control-Allow-Origin", "*") // a enlever plus tard quand on serve le build de frontend
 	err := checkMethod(r.Method, []string{"GET"})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
