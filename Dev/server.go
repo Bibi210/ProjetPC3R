@@ -13,7 +13,7 @@ func bootServer(port uint16) {
 		log.Fatal("port is too small")
 	}
 	for key, value := range HandlersMap() {
-		http.HandleFunc(key, value)
+		http.HandleFunc(key, value.Handle())
 	}
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	log.Println("Server Open")

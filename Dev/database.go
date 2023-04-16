@@ -2,7 +2,6 @@ package main
 
 import (
 	/* 	"database/sql" */
-	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -13,8 +12,8 @@ import (
 
 /* KeyUserName */
 type UserLOGININFO struct {
-	password       string
-	currentSession int64
+	password  string
+	ExpiresAt time.Time
 }
 
 /* KeyUserName */
@@ -24,27 +23,34 @@ type UserProfile struct {
 
 type SimpleClaims struct {
 	Username  string
-	ExpiresAt time.Time
-	SessionId int64
+	ExpiresAt string
+}
+
+func (c SimpleClaims) Exp() time.Time {
+	exp, err := time.Parse(time.ANSIC, c.ExpiresAt)
+	if err != nil {
+		ServerRuntimeError("Error while parsing time", err)
+	}
+	return exp
 }
 
 func (c SimpleClaims) Valid() error {
-	if c.ExpiresAt == (time.Time{}) {
-		return OnlyServerError("Token don't have an expiration date")
+	if c.Exp().IsZero() {
+		OnlyServerError("Token don't have an expiration date")
 	}
-	if c.ExpiresAt.Before(time.Now()) {
-		return OnlyServerError("Token is expired")
+	if c.Exp().Before(time.Now()) {
+		OnlyServerError("Token is expired")
 	}
 	user, ok := loginMAP[c.Username]
 	if !ok {
-		return OnlyServerError(fmt.Sprintf("Invalid Username %s", c.Username))
+		OnlyServerError(fmt.Sprintf("Invalid Username %s", c.Username))
 	}
-	if user.currentSession != c.SessionId {
-		return OnlyServerError(fmt.Sprintf("The Session Used is Invalid %s", c.Username))
+	if user.ExpiresAt.Format(time.ANSIC) != c.ExpiresAt {
+		OnlyServerError(fmt.Sprintf("The Session Used is Invalid %s", c.Username))
 	}
 	_, ok = profilMap[c.Username]
 	if !ok {
-		return OnlyServerError(fmt.Sprintf("User without profile %s", c.Username))
+		OnlyServerError(fmt.Sprintf("User without profile %s", c.Username))
 	}
 	return nil
 }
@@ -54,63 +60,81 @@ var profilMap = map[string]UserProfile{}
 
 var serverKey = []byte("This is a fun serverkey")
 
-func tokenToString(token *jwt.Token) (string, error) {
+func tokenToString(token *jwt.Token) string {
 	tokenString, err := token.SignedString(serverKey)
 	if err != nil {
-		return tokenString, ServerRuntimeError("Error While Converting JWT Token to string", err)
+		ServerRuntimeError("Error While Converting JWT Token to string", err)
 	}
-	return tokenString, nil
+	return tokenString
+}
+
+func tokenFromString(tokenString string) *jwt.Token {
+	token, err := jwt.ParseWithClaims(tokenString, &SimpleClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			OnlyServerError("Unexpected signing method")
+			return nil, nil
+		}
+		return serverKey, nil
+	})
+	if err != nil {
+		ServerRuntimeError("Error While Parsing JWT Token from string", err)
+	}
+	return token
+}
+
+func claimsFromString(tokenString string) SimpleClaims {
+	token := tokenFromString(tokenString)
+	claims, ok := token.Claims.(*SimpleClaims)
+	if !ok {
+		OnlyServerError("Error While Parsing JWT Token from string")
+	}
+	return *claims
 }
 
 const sessionDuration = 1 * time.Hour
 
-func createToken(username string) (*jwt.Token, error) {
+func createToken(username string) *jwt.Token {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, SimpleClaims{})
 	expirationTime := time.Now().Add(sessionDuration)
-
-	token.Claims = SimpleClaims{ExpiresAt: expirationTime, Username: username, SessionId: expirationTime.Unix()}
+	expirationTimeStr := expirationTime.Format(time.ANSIC)
+	claims := SimpleClaims{ExpiresAt: expirationTimeStr, Username: username}
+	token.Claims = claims
 	user := loginMAP[username]
-	user.currentSession = expirationTime.Unix()
+	user.ExpiresAt = expirationTime
 	loginMAP[username] = user
-	return token, token.Claims.Valid()
-}
 
-func loginAccount(auth AuthJSON) (string, error) {
-	if loginMAP[auth.Login].password != auth.Mdp {
-		return "", OnlyServerError("Invalid Password")
-	}
-	token, err := createToken(auth.Login)
-	if err != nil {
-		return "", err
-	}
-	tokenstr, err := tokenToString(token)
-	if err != nil {
-		return "", err
-	}
 	printDatabase()
-	return tokenstr, nil
+	token.Claims.Valid()
+	return token
 }
 
-func addToDatabase(auth AuthJSON) error {
+func loginAccount(auth AuthJSON) string {
+	if loginMAP[auth.Login].password != auth.Mdp {
+		OnlyServerError("Invalid Password")
+	}
+	token := createToken(auth.Login)
+	tokenstr := tokenToString(token)
+	return tokenstr
+}
+
+func addToDatabase(auth AuthJSON) {
 	_, ok := loginMAP[auth.Login]
 	if ok {
-		return OnlyServerError(fmt.Sprintf("User %s already exists", auth.Login))
+		OnlyServerError(fmt.Sprintf("User %s already exists", auth.Login))
 	}
-	loginMAP[auth.Login] = UserLOGININFO{password: auth.Mdp, currentSession: -1}
+	loginMAP[auth.Login] = UserLOGININFO{password: auth.Mdp}
 	profilMap[auth.Login] = UserProfile{Connection: 0}
 	printDatabase()
-	return nil
 }
 
-func deleteFromDatabase(username string) error {
+func deleteFromDatabase(username string) {
 	_, ok := loginMAP[username]
 	if !ok {
-		return OnlyServerError(fmt.Sprintf("User %s dont exists", username))
+		OnlyServerError(fmt.Sprintf("User %s dont exists", username))
 	}
 	delete(loginMAP, username)
 	delete(profilMap, username)
 	printDatabase()
-	return nil
 }
 
 func printDatabase() {
@@ -120,38 +144,35 @@ func printDatabase() {
 	}
 }
 
-func verifySession(tokenString string) (string, error) {
-	var claims SimpleClaims
-	token, err := jwt.ParseWithClaims(tokenString, &SimpleClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("invalid Token at parsing claims")
-		}
-		return serverKey, nil
-	})
-
-	if err != nil {
-		return "", ServerRuntimeError("Invalid Token", err)
-	}
-
-	claims = *token.Claims.(*SimpleClaims)
-	if err := claims.Valid(); err != nil {
-		return "", err
-	}
-	return claims.Username, nil
+func verifySession(tokenString string) string {
+	claims := claimsFromString(tokenString)
+	claims.Valid()
+	return claims.Username
 }
 
-func getUserData(username string) (UserProfile, error) {
+func getUserData(username string) UserProfile {
 	profile := profilMap[username]
 	profile.Connection++
 	profilMap[username] = profile
-	return profile, nil
+	return profile
 }
 
-func logoutAccount(username string) error {
+func logoutAccount(username string) {
 	user := loginMAP[username]
-	user.currentSession = -1
+	user.ExpiresAt = time.Now()
 	loginMAP[username] = user
-	return nil
+
+}
+
+func isUserConnected(username string) bool {
+	user := loginMAP[username]
+	return user.ExpiresAt.After(time.Now())
+}
+
+func extendSession(username string) string {
+	log.Println("Extending Session for user : ", username)
+	token := createToken(username)
+	return tokenToString(token)
 }
 
 /*

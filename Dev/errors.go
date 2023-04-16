@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 )
 
 type errorStruct struct {
@@ -16,18 +15,16 @@ func (e *errorStruct) Error() string {
 	}
 	return fmt.Sprintf("ServerSIDE error: %s due to -> Runtime error %s", e.s, e.err.Error())
 }
-func OnlyServerError(text string) error {
+func OnlyServerError(text string) {
 	out := &errorStruct{nil, text}
-	log.Println(out.Error())
-	return out
+	panic(out)
 }
-func ServerRuntimeError(text string, err error) error {
+func ServerRuntimeError(text string, err error) {
 	if err == nil {
-		return nil
+		return
 	}
 	out := &errorStruct{err, text}
-	log.Println(out.Error())
-	return out
+	panic(out)
 }
 
 type acceptableMethods struct {
@@ -37,24 +34,24 @@ type acceptableMethods struct {
 	Delete bool
 }
 
-func checkMethod(method string, acceptable acceptableMethods) error {
+func checkMethod(method string, acceptable acceptableMethods) {
 	switch method {
 	case "GET":
 		if acceptable.Get {
-			return nil
+			return
 		}
 	case "POST":
 		if acceptable.Post {
-			return nil
+			return
 		}
 	case "PUT":
 		if acceptable.Put {
-			return nil
+			return
 		}
 	case "DELETE":
 		if acceptable.Delete {
-			return nil
+			return
 		}
 	}
-	return OnlyServerError(fmt.Sprintf("Method %s is not supported. Accepted %v\n", method, acceptable))
+	OnlyServerError(fmt.Sprintf("Method %s is not supported. Accepted %v\n", method, acceptable))
 }
