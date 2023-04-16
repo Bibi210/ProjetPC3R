@@ -30,12 +30,31 @@ func ServerRuntimeError(text string, err error) error {
 	return out
 }
 
-func checkMethod(method string, acceptable []string) error {
-	for _, a := range acceptable {
-		if a == method {
+type acceptableMethods struct {
+	Get    bool
+	Post   bool
+	Put    bool
+	Delete bool
+}
+
+func checkMethod(method string, acceptable acceptableMethods) error {
+	switch method {
+	case "GET":
+		if acceptable.Get {
+			return nil
+		}
+	case "POST":
+		if acceptable.Post {
+			return nil
+		}
+	case "PUT":
+		if acceptable.Put {
+			return nil
+		}
+	case "DELETE":
+		if acceptable.Delete {
 			return nil
 		}
 	}
-
-	return OnlyServerError(fmt.Sprintf("Method %s is not supported.", method))
+	return OnlyServerError(fmt.Sprintf("Method %s is not supported. Accepted %v\n", method, acceptable))
 }

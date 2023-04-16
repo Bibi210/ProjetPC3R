@@ -1,40 +1,32 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net/http"
 )
 
-func Hello(w http.ResponseWriter, r *http.Request) {
-	log.Printf("got %s request\n", r.URL)
-	err := checkMethod(r.Method, []string{"GET"})
+func authUser(w http.ResponseWriter, r *http.Request) (string, bool) {
+	cookie, err := r.Cookie("Session")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
-		return
+		http.Error(w, OnlyServerError("Need authentification").Error(), http.StatusBadRequest)
+		return "", false
 	}
-	io.WriteString(w, "Hello, HTTP!\n")
+	username, err := verifySession(cookie.Value)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return "", false
+	}
+	return username, true
 }
 
-func Root(w http.ResponseWriter, r *http.Request) {
-	log.Printf("got %s request\n", r.URL)
-	err := checkMethod(r.Method, []string{"GET"})
+func LoginWithRemember(w http.ResponseWriter, r *http.Request) {
+	err := checkMethod(r.Method, acceptableMethods{Put: true})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
 		return
 	}
-	io.WriteString(w, "This is my website!\n")
-}
-
-func Login(w http.ResponseWriter, r *http.Request) {
-	log.Printf("got %s request\n", r.URL)
-	err := checkMethod(r.Method, []string{"POST"})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
-		return
-	}
-	var auth Auth
+	var auth AuthJSON
 	err = parseRequestToStruct(r, &auth)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusPartialContent)
@@ -44,74 +36,113 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
-	} else {
-		io.WriteString(w, fmt.Sprintf("This is your token : %s \n", tokenstr))
 	}
+	cookie_lifetime := int(sessionDuration.Seconds())
+	cookie := http.Cookie{Name: "Session", Value: tokenstr, MaxAge: cookie_lifetime}
+	http.SetCookie(w, &cookie)
+
 }
 
 func CreateAccount(w http.ResponseWriter, r *http.Request) {
-	log.Printf("got %s request\n", r.URL)
-	err := checkMethod(r.Method, []string{"POST"})
+	err := checkMethod(r.Method, acceptableMethods{Post: true})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
 		return
 	}
-	var auth Auth
+	var auth AuthJSON
 	err = parseRequestToStruct(r, &auth)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusPartialContent)
 		return
 	}
-
-	if addToDatabase(auth) != nil {
+	err = addToDatabase(auth)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 }
 
-func Logout(w http.ResponseWriter, r *http.Request) {
-	log.Printf("got %s request\n", r.URL)
-	err := checkMethod(r.Method, []string{"GET"})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
-		return
-	}
-
-	io.WriteString(w, "logged out")
-}
-
 func GetProfile(w http.ResponseWriter, r *http.Request) {
-	log.Printf("got %s request\n", r.URL)
-	err := checkMethod(r.Method, []string{"GET"})
+	err := checkMethod(r.Method, acceptableMethods{Get: true})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
 		return
 	}
-	tokenStr := r.Header["Token"][0]
-	if r.Header["Token"] == nil {
-		http.Error(w, OnlyServerError("Can not find token in header").Error(), http.StatusBadRequest)
+	username, ok := authUser(w, r)
+	if !ok {
 		return
 	}
-	profile, err := getUserData(tokenStr)
+	profile, err := getUserData(username)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	str, err := structToJSON(profile)
+	sendStruct(w, profile)
+}
+
+func Logout(w http.ResponseWriter, r *http.Request) {
+	err := checkMethod(r.Method, acceptableMethods{Put: true})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusPartialContent)
+		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
 		return
 	}
-	io.WriteString(w, str)
+	username, ok := authUser(w, r)
+	if !ok {
+		return
+	}
+	err = logoutAccount(username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	cookie := http.Cookie{Name: "Session", Value: "", MaxAge: -1}
+	http.SetCookie(w, &cookie)
+	io.WriteString(w, "logged out")
+}
+
+func DeleteAccount(w http.ResponseWriter, r *http.Request) {
+	err := checkMethod(r.Method, acceptableMethods{Delete: true})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
+		return
+	}
+	username, ok := authUser(w, r)
+	if !ok {
+		return
+	}
+	err = logoutAccount(username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	err = deleteFromDatabase(username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	cookie := http.Cookie{Name: "Session", Value: "", MaxAge: -1}
+	http.SetCookie(w, &cookie)
+	io.WriteString(w, "Account Deleted")
+}
+
+func wrapHandler(f func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		log.Printf("Request: %s %s", r.Method, r.URL.Path)
+		f(w, r)
+	}
 }
 
 func HandlersMap() map[string]func(http.ResponseWriter, *http.Request) {
 	handlers := make(map[string]func(http.ResponseWriter, *http.Request))
-	handlers["/hello"] = Hello
-	handlers["/"] = Root
-	handlers["/login"] = Login
+	handlers["/login"] = LoginWithRemember
+	handlers["/logout"] = Logout
 	handlers["/get_profile"] = GetProfile
 	handlers["/create_account"] = CreateAccount
-	handlers["/logout"] = Logout
+	handlers["/delete_account"] = DeleteAccount
+
+	for k, v := range handlers {
+		handlers[k] = wrapHandler(v)
+	}
 	return handlers
 }
