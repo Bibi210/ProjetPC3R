@@ -1,5 +1,7 @@
 package main
 
+// TODO Probably Need Refactoring */
+
 import (
 	"io"
 	"log"
@@ -61,7 +63,7 @@ type AuthService struct {
 
 func authWrapper(toWrap AuthService) HttpHandler {
 	return wrapHandler(func(w http.ResponseWriter, r *http.Request) Output {
-		username := authUser(w, r)
+		username := authUser(r)
 		outmsg := toWrap.handler(username, w, r)
 		if isUserConnected(username) {
 			token := extendSession(username)
@@ -84,7 +86,7 @@ func (h AuthService) Handle() HttpHandler {
 	return authWrapper(h)
 }
 
-func authUser(w http.ResponseWriter, r *http.Request) string {
+func authUser(r *http.Request) string {
 	cookie, err := r.Cookie("Session")
 	if err != nil {
 		OnlyServerError("Need authentification")
@@ -93,36 +95,36 @@ func authUser(w http.ResponseWriter, r *http.Request) string {
 	return username
 }
 
-func LoginWithRemember(w http.ResponseWriter, r *http.Request) Output {
+func LoginWithRemember(_ http.ResponseWriter, r *http.Request) Output {
 	var auth AuthJSON
 	parseRequestToStruct(r, &auth)
 	token := loginAccount(auth)
 	return Output{Success: true, Message: "Logged in", Result: token}
 }
 
-func CreateAccount(w http.ResponseWriter, r *http.Request) Output {
+func CreateAccount(_ http.ResponseWriter, r *http.Request) Output {
 	var auth AuthJSON
 	parseRequestToStruct(r, &auth)
 	addToDatabase(auth)
 	return Output{Success: true, Message: "Account Created"}
 }
 
-func GetProfile(username string, w http.ResponseWriter, r *http.Request) Output {
+func GetPrivateProfile(username string, _ http.ResponseWriter, _ *http.Request) Output {
 	return Output{Success: true, Message: "Profile", Result: getUserData(username)}
 }
 
-func Logout(username string, w http.ResponseWriter, r *http.Request) Output {
+func Logout(username string, _ http.ResponseWriter, _ *http.Request) Output {
 	logoutAccount(username)
 	return Output{Success: true, Message: "Logged out"}
 }
 
-func DeleteAccount(username string, w http.ResponseWriter, r *http.Request) Output {
+func DeleteAccount(username string, _ http.ResponseWriter, _ *http.Request) Output {
 	logoutAccount(username)
 	deleteFromDatabase(username)
 	return Output{Success: true, Message: "Account deleted"}
 }
 
-func RandomShitPost(w http.ResponseWriter, r *http.Request) Output {
+func RandomShitPost(_ http.ResponseWriter, _ *http.Request) Output {
 	response, err := http.Get("https://api.thedailyshitpost.net/random")
 	if err != nil {
 		ServerRuntimeError("Error while getting shitpost", err)
@@ -130,7 +132,7 @@ func RandomShitPost(w http.ResponseWriter, r *http.Request) Output {
 	var shitpost RandomShitPostJSON
 	parseResponseToStruct(response, &shitpost)
 	if shitpost.Error {
-		OnlyServerError("Error while getting RandomShitpost")
+		OnlyServerError("Remote Error while getting RandomShitpost")
 	}
 	return Output{Success: true, Message: "Random Shitpost", Result: shitpost.Url}
 }
@@ -139,7 +141,7 @@ func HandlersMap() map[string]ServerHandle {
 	handlers := make(map[string]ServerHandle)
 	handlers["/login"] = BasicService{LoginWithRemember, acceptableMethods{Put: true}}
 	handlers["/create_account"] = BasicService{CreateAccount, acceptableMethods{Post: true}}
-	handlers["/get_profile"] = AuthService{GetProfile, acceptableMethods{Get: true}}
+	handlers["/get_private_profile"] = AuthService{GetPrivateProfile, acceptableMethods{Get: true}}
 	handlers["/logout"] = AuthService{Logout, acceptableMethods{Put: true}}
 	handlers["/delete_account"] = AuthService{DeleteAccount, acceptableMethods{Delete: true}}
 	handlers["/random_shitpost"] = BasicService{RandomShitPost, acceptableMethods{Get: true}}

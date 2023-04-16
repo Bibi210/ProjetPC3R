@@ -1,14 +1,12 @@
 package main
 
 import (
-	/* 	"database/sql" */
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
-	_ "github.com/mattn/go-sqlite3"
-)
+	/* _ "github.com/mattn/go-sqlite3" */)
 
 /* KeyUserName */
 type UserLOGININFO struct {
