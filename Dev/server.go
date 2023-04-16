@@ -27,5 +27,5 @@ func bootServer(port uint16) {
 
 func main() {
 	printDatabase()
-	bootServer(4242)
+	bootServer(25565)
 }
