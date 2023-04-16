@@ -7,15 +7,29 @@ import (
 )
 
 func parseRequestToBytes(r *http.Request) []byte {
-	body := r.Body
-	defer body.Close()
-	var buffer []byte = make([]byte, r.ContentLength)
-	read, err := body.Read(buffer)
-	if err != nil && err != io.EOF {
+	defer r.Body.Close()
+	read, err := io.ReadAll(r.Body)
+	if err != nil {
 		ServerRuntimeError("Can't Parse Request Body", err)
-		return []byte{}
 	}
-	return buffer[:read]
+	return read
+}
+
+func parseResponseToBytes(r *http.Response) []byte {
+
+	if r == nil || r.StatusCode != 200 {
+		OnlyServerError("Request Failed with status code: " + string(r.Status))
+	}
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		ServerRuntimeError("Can't Parse Response Body", err)
+	}
+	return body
+}
+
+func parseResponseToString(r *http.Response) string {
+	return string(parseResponseToBytes(r))
 }
 
 func parseRequestToString(r *http.Request) string {
@@ -24,6 +38,11 @@ func parseRequestToString(r *http.Request) string {
 
 func parseRequestToStruct(r *http.Request, t any) {
 	bytes := parseRequestToBytes(r)
+	bytesToStruct(bytes, t)
+}
+
+func parseResponseToStruct(r *http.Response, t any) {
+	bytes := parseResponseToBytes(r)
 	bytesToStruct(bytes, t)
 }
 
@@ -45,25 +64,18 @@ func structToJSON(t any) string {
 	return string(obj)
 }
 
-type Input struct {
-	Content  any
-	Username string
-}
-
 type Output struct {
 	Success bool
 	Message string
 	Result  any
 }
 
-type JSONInput struct {
-	Content any
-}
-
 type AuthJSON struct {
 	Login string
 	Mdp   string
 }
-type Username struct {
-	Username string
+
+type RandomShitPostJSON struct {
+	Url   string
+	Error bool
 }
