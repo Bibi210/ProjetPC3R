@@ -48,7 +48,7 @@ func parseResponseToStruct(r *http.Response, t any) {
 
 func bytesToStruct(bytes []byte, buffer any) {
 	if json.Unmarshal(bytes, buffer) != nil {
-		ServerRuntimeError("Can't parse JSON", nil)
+		ServerRuntimeError("JSON with wrong format", nil)
 	}
 }
 

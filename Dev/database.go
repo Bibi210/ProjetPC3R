@@ -14,9 +14,22 @@ type UserLOGININFO struct {
 	ExpiresAt time.Time
 }
 
+/* Table of Users  -> UserID : PK(int),Username : string , Password : string , Session : Blob , LastSeen : string */
+/* Table of ShitPost -> ShitPostID : PK(int) | Poster : FK(UserID) | Caption : string | URL : string | Date : string*/
+/* Table of Msg -> MsgID : PK(int) | Sender :  FK(UserID) | Content : string | Date : string*/
+/* Table of DM -> Receiver : FK(UserID) | Message : FK(MsgID)
+/* Table of Comments -> Post : FK(ShitPost) | Message : FK(MsgID)  */
+
+/* Get User Profile -> Select *(!Password) from Users */
+/* Get User ID ->  Select UserID from Users where UserID = $1
+/* Get User ShitPosts ->  Select * from ShitPost where Poster = Get User ID */
+/* Get User Comments -> Select * from Comments where Poster = Get User ID 
+
 /* KeyUserName */
 type UserProfile struct {
 	Connection int
+	LastSeen   time.Time
+	NBMessages int
 }
 
 type SimpleClaims struct {

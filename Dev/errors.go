@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"log"
+	"net/http"
 )
 
 type errorStruct struct {
@@ -25,6 +28,15 @@ func ServerRuntimeError(text string, err error) {
 	}
 	out := &errorStruct{err, text}
 	panic(out)
+}
+
+func errorCatcher(w http.ResponseWriter) {
+	if r := recover(); r != nil {
+		err := r.(error)
+		outmsg := structToJSON(Output{Success: false, Message: err.Error()})
+		log.Printf("Error: %s", err.Error())
+		io.WriteString(w, outmsg)
+	}
 }
 
 type acceptableMethods struct {

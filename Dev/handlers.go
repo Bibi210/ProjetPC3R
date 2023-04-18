@@ -17,15 +17,6 @@ type ServerHandle interface { // interface for handlers
 	AcceptableMethods() acceptableMethods
 }
 
-func errorCatcher(w http.ResponseWriter) {
-	if r := recover(); r != nil {
-		err := r.(error)
-		outmsg := structToJSON(Output{Success: false, Message: err.Error()})
-		log.Printf("Error: %s", err.Error())
-		io.WriteString(w, outmsg)
-	}
-}
-
 func wrapHandler(f ServiceFunc, accepted acceptableMethods) HttpHandler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer errorCatcher(w)
