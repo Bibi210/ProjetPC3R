@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"io"
 	"log"
@@ -33,10 +34,19 @@ func ServerRuntimeError(text string, err error) {
 func errorCatcher(w http.ResponseWriter) {
 	if r := recover(); r != nil {
 		err := r.(error)
-		outmsg := structToJSON(Output{Success: false, Message: err.Error()})
+		outmsg := structToJSON(OutputJSON{Success: false, Message: err.Error()})
 		log.Printf("Error: %s", err.Error())
 		io.WriteString(w, outmsg)
 	}
+}
+
+func cleanCloser(db *sql.DB) {
+	if r := recover(); r != nil {
+		err := r.(error)
+		closeDatabase(db)
+		panic(err)
+	}
+	closeDatabase(db)
 }
 
 type acceptableMethods struct {

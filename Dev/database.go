@@ -3,206 +3,200 @@ package main
 import (
 	"fmt"
 	"log"
+
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
-	/* _ "github.com/mattn/go-sqlite3" */)
+	"database/sql"
+
+	_ "github.com/mattn/go-sqlite3"
+)
 
 /* KeyUserName */
-type UserLOGININFO struct {
-	password  string
-	ExpiresAt time.Time
-}
 
-/* Table of Users  -> UserID : PK(int),Username : string , Password : string , Session : Blob , LastSeen : string */
-/* Table of ShitPost -> ShitPostID : PK(int) | Poster : FK(UserID) | Caption : string | URL : string | Date : string*/
-/* Table of Msg -> MsgID : PK(int) | Sender :  FK(UserID) | Content : string | Date : string*/
+/* Table of Users  -> UserID : PK(int) | Username : string | Password : string | Session : Blob | LastSeen : string */
+/* Table of ShitPost -> ShitPostID : PK(int) | Poster : FK(UserID) | Caption : string | URL : string | Date : string | Upvotes : int*/
+/* Table of Msg -> MsgID : PK(int) | Sender :  FK(UserID) | Content : string | Date : string | Upvotes : int */
 /* Table of DM -> Receiver : FK(UserID) | Message : FK(MsgID)
 /* Table of Comments -> Post : FK(ShitPost) | Message : FK(MsgID)  */
 
 /* Get User Profile -> Select *(!Password) from Users */
 /* Get User ID ->  Select UserID from Users where UserID = $1
 /* Get User ShitPosts ->  Select * from ShitPost where Poster = Get User ID */
-/* Get User Comments -> Select * from Comments where Poster = Get User ID 
+/* Get User Comments -> Select * from Comments where Poster = Get User ID*/
 
-/* KeyUserName */
-type UserProfile struct {
-	Connection int
-	LastSeen   time.Time
-	NBMessages int
+func addToDatabase(db *sql.DB, auth AuthJSON) {
+	createUser(db, auth.Login, auth.Mdp)
 }
 
-type SimpleClaims struct {
-	Username  string
-	ExpiresAt string
+func deleteFromDatabase(db *sql.DB, username username) {
+	deleteUser(db, string(username))
 }
 
-func (c SimpleClaims) Exp() time.Time {
-	exp, err := time.Parse(time.ANSIC, c.ExpiresAt)
+func getUserData(db *sql.DB, username username) UserProfileJSON {
+	user := getUser(db, string(username))
+	return UserProfileJSON{Username: user.Username, UserID: user.UserID}
+}
+
+const createUsers = `CREATE TABLE IF NOT EXISTS Users (
+	UserID INTEGER PRIMARY KEY AUTOINCREMENT,
+	Username TEXT NOT NULL UNIQUE,
+	Password TEXT NOT NULL,
+	Session BLOB,
+	LastSeen TEXT
+);`
+
+type User struct {
+	UserID   int
+	Username string
+	Password string
+	Session  time.Time
+	LastSeen time.Time
+}
+
+func (u *User) String() string {
+	return fmt.Sprintf("UserID : %d | Username : %s | Password : %s | Session : %s | LastSeen : %s", u.UserID, u.Username, u.Password, formatTime(u.Session), formatTime(u.LastSeen))
+}
+
+func ReadFromRow(row *sql.Rows) User {
+	u := User{}
+	var lastSeen string
+	var session string
+	ServerRuntimeError("Error While Reading Row", row.Scan(&u.UserID, &u.Username, &u.Password, &session, &lastSeen))
+	u.LastSeen = parseTime(lastSeen)
+	u.Session = parseTime(session)
+	return u
+}
+
+func (u *User) InsertRow(c *sql.DB) {
+	Execute(c, "INSERT INTO Users (Username, Password, Session, LastSeen) VALUES (?, ?, ?, ?)", u.Username, u.Password, formatTime(u.Session), formatTime(u.LastSeen))
+}
+
+func (u *User) UpdateRow(c *sql.DB) {
+	Execute(c, "UPDATE Users SET Username = ?, Password = ?, Session = ?, LastSeen = ? WHERE UserID = ?", u.Username, u.Password, formatTime(u.Session), formatTime(u.LastSeen), u.UserID)
+}
+
+func (u *User) UpdateSession(c *sql.DB) {
+	Execute(c, "UPDATE Users SET Session = ?, LastSeen = ? WHERE UserID = ?", formatTime(u.Session), formatTime(u.LastSeen), u.UserID)
+}
+
+func getUser(c *sql.DB, username string) User {
+	rows := query(c, "SELECT * FROM Users WHERE Username = ?", username)
+	defer rows.Close()
+	if !rows.Next() {
+		OnlyServerError("User don't exist")
+	}
+	return ReadFromRow(rows)
+}
+
+func deleteUser(c *sql.DB, username string) {
+	Execute(c, "DELETE FROM Users WHERE Username = ?", username)
+}
+
+func createUser(co *sql.DB, username, password string) {
+	user := User{Username: username, Password: password}
+	user.InsertRow(co)
+}
+
+func showUserTable() {
+	db := openDatabase()
+	defer closeDatabase(db)
+	rows := query(db, "SELECT * FROM Users")
+	defer rows.Close()
+	for rows.Next() {
+		log.Println(ReadFromRow(rows))
+	}
+}
+
+const createShitPost = `CREATE TABLE IF NOT EXISTS ShitPost (
+	ShitPostID INTEGER PRIMARY KEY AUTOINCREMENT,
+	Poster INTEGER NOT NULL,
+	Caption TEXT NOT NULL,
+	URL TEXT NOT NULL,
+	Date TEXT NOT NULL,
+	Upvotes INTEGER NOT NULL,
+	FOREIGN KEY (Poster) 
+		REFERENCES Users(UserID)
+);`
+
+const createMsg = `CREATE TABLE IF NOT EXISTS Msg (
+	MsgID INTEGER PRIMARY KEY AUTOINCREMENT,
+	Sender INTEGER NOT NULL,
+	Content TEXT NOT NULL,
+	Date TEXT NOT NULL,
+	Upvotes INTEGER NOT NULL,
+	FOREIGN KEY (Sender)
+		REFERENCES Users(UserID)
+);`
+
+const createDM = `CREATE TABLE IF NOT EXISTS DM (
+	Receiver INTEGER NOT NULL,
+	Message INTEGER NOT NULL,
+	FOREIGN KEY (Receiver)
+		REFERENCES Users(UserID),
+	FOREIGN KEY (Message)
+		REFERENCES Msg(MsgID)
+);`
+
+const createComments = `CREATE TABLE IF NOT EXISTS Comments (
+	Post INTEGER NOT NULL,
+	Message INTEGER NOT NULL,
+	FOREIGN KEY (Post)
+		REFERENCES ShitPost(ShitPostID),
+	FOREIGN KEY (Message)
+		REFERENCES Msg(MsgID)
+);`
+
+func openDatabase() *sql.DB {
+	db, err := sql.Open("sqlite3", "./information.db")
+	ServerRuntimeError("Error While Opening Database", err)
+	return db
+}
+
+func closeDatabase(db *sql.DB) {
+	err := db.Close()
 	if err != nil {
-		ServerRuntimeError("Error while parsing time", err)
+		log.Println(err)
+		ServerRuntimeError("Error While Closing Database", db.Close())
 	}
-	return exp
-}
-
-func (c SimpleClaims) Valid() error {
-	if c.Exp().IsZero() {
-		OnlyServerError("Token don't have an expiration date")
-	}
-	if c.Exp().Before(time.Now()) {
-		OnlyServerError("Token is expired")
-	}
-	user, ok := loginMAP[c.Username]
-	if !ok {
-		OnlyServerError(fmt.Sprintf("Invalid Username %s", c.Username))
-	}
-	if user.ExpiresAt.Format(time.ANSIC) != c.ExpiresAt {
-		OnlyServerError(fmt.Sprintf("The Session Used is Invalid %s", c.Username))
-	}
-	_, ok = profilMap[c.Username]
-	if !ok {
-		OnlyServerError(fmt.Sprintf("User without profile %s", c.Username))
-	}
-	return nil
-}
-
-var loginMAP = map[string]UserLOGININFO{}
-var profilMap = map[string]UserProfile{}
-
-var serverKey = []byte("This is a fun serverkey")
-
-func tokenToString(token *jwt.Token) string {
-	tokenString, err := token.SignedString(serverKey)
-	if err != nil {
-		ServerRuntimeError("Error While Converting JWT Token to string", err)
-	}
-	return tokenString
-}
-
-func tokenFromString(tokenString string) *jwt.Token {
-	token, err := jwt.ParseWithClaims(tokenString, &SimpleClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			OnlyServerError("Unexpected signing method")
-			return nil, nil
-		}
-		return serverKey, nil
-	})
-	if err != nil {
-		ServerRuntimeError("Error While Parsing JWT Token from string", err)
-	}
-	return token
-}
-
-func claimsFromString(tokenString string) SimpleClaims {
-	token := tokenFromString(tokenString)
-	claims, ok := token.Claims.(*SimpleClaims)
-	if !ok {
-		OnlyServerError("Error While Parsing JWT Token from string")
-	}
-	return *claims
-}
-
-const sessionDuration = 1 * time.Hour
-
-func createToken(username string) *jwt.Token {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, SimpleClaims{})
-	expirationTime := time.Now().Add(sessionDuration)
-	expirationTimeStr := expirationTime.Format(time.ANSIC)
-	claims := SimpleClaims{ExpiresAt: expirationTimeStr, Username: username}
-	token.Claims = claims
-	user := loginMAP[username]
-	user.ExpiresAt = expirationTime
-	loginMAP[username] = user
-
-	printDatabase()
-	token.Claims.Valid()
-	return token
-}
-
-func loginAccount(auth AuthJSON) string {
-	if loginMAP[auth.Login].password != auth.Mdp {
-		OnlyServerError("Invalid Password")
-	}
-	token := createToken(auth.Login)
-	tokenstr := tokenToString(token)
-	return tokenstr
-}
-
-func addToDatabase(auth AuthJSON) {
-	_, ok := loginMAP[auth.Login]
-	if ok {
-		OnlyServerError(fmt.Sprintf("User %s already exists", auth.Login))
-	}
-	loginMAP[auth.Login] = UserLOGININFO{password: auth.Mdp}
-	profilMap[auth.Login] = UserProfile{Connection: 0}
-	printDatabase()
-}
-
-func deleteFromDatabase(username string) {
-	_, ok := loginMAP[username]
-	if !ok {
-		OnlyServerError(fmt.Sprintf("User %s dont exists", username))
-	}
-	delete(loginMAP, username)
-	delete(profilMap, username)
-	printDatabase()
-}
-
-func printDatabase() {
-	log.Println("DatabaseState : ")
-	for name, data := range loginMAP {
-		log.Printf("User : %s | Data : %v\n", name, data)
-	}
-}
-
-func verifySession(tokenString string) string {
-	claims := claimsFromString(tokenString)
-	claims.Valid()
-	return claims.Username
-}
-
-func getUserData(username string) UserProfile {
-	profile := profilMap[username]
-	profile.Connection++
-	profilMap[username] = profile
-	return profile
-}
-
-func logoutAccount(username string) {
-	user := loginMAP[username]
-	user.ExpiresAt = time.Now()
-	loginMAP[username] = user
 
 }
 
-func isUserConnected(username string) bool {
-	user := loginMAP[username]
-	return user.ExpiresAt.After(time.Now())
+func Execute(c *sql.DB, query string, args ...interface{}) sql.Result {
+	res, err := c.Exec(query, args...)
+	ServerRuntimeError("Error While Executing Query", err)
+	return res
 }
 
-func extendSession(username string) string {
-	log.Println("Extending Session for user : ", username)
-	token := createToken(username)
-	return tokenToString(token)
+func query(c *sql.DB, query string, args ...interface{}) *sql.Rows {
+	rows, err := c.Query(query, args...)
+	ServerRuntimeError("Error While Querying Database", err)
+	return rows
 }
 
-/*
-func fn() {
+func createDatabase() {
+	c := openDatabase()
+	defer closeDatabase(c)
+	Execute(c, createUsers)
+	Execute(c, createShitPost)
+	Execute(c, createMsg)
+	Execute(c, createDM)
+	Execute(c, createComments)
 
-	db, err := sql.Open("sqlite3", ":memory:")
+}
 
-	if err != nil {
-		log.Fatal(err)
+func deleteDatabase() {
+	c := openDatabase()
+	defer closeDatabase(c)
+	Execute(c, "DROP TABLE Users")
+	Execute(c, "DROP TABLE ShitPost")
+	Execute(c, "DROP TABLE Msg")
+	Execute(c, "DROP TABLE DM")
+	Execute(c, "DROP TABLE Comments")
+}
+
+func shutdownDatabase(cleanDatabase bool) {
+	if cleanDatabase {
+		deleteDatabase()
 	}
-
-	defer db.Close()
-
-	var version string
-	err = db.QueryRow("SELECT SQLITE_VERSION()").Scan(&version)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(version)
-} */
+	log.Println("Database Shutdown")
+}

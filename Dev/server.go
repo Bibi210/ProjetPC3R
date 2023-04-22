@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 )
 
 func bootServer(port uint16) {
@@ -25,7 +26,22 @@ func bootServer(port uint16) {
 	}
 }
 
+func shutdownListener() {
+	log.Println("Shutdown Listener")
+	// Catch SIGINT to shutdownDatabase()
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	<-c
+	log.Println("Server Shutdown")
+	shutdownDatabase(cleanDatabase)
+	os.Exit(0)
+}
+
+var cleanDatabase = false
+
 func main() {
-	printDatabase()
+	createDatabase()
+	go shutdownListener()
 	bootServer(25565)
+	shutdownDatabase(cleanDatabase)
 }
