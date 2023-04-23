@@ -38,6 +38,16 @@ type ResponseRandomShitPostJSON struct {
 type ResponseUserProfileJSON struct {
 	UserID   int
 	Username string
+	Posts    []ResponseSavedShitPostJSON
+	LastSeen string
+}
+
+type ResponseSavedShitPostJSON struct {
+	Url     string
+	Caption string
+	Creator string
+	Date    string
+	Upvotes int
 }
 
 /* ClientMessages */
@@ -48,4 +58,9 @@ type RequestAuthJSON struct {
 
 type RequestPublicUserProfileJSON struct {
 	Username string
+}
+
+type SaveShitPostJSON struct {
+	Url     string
+	Caption string
 }

@@ -87,7 +87,7 @@ func createToken(db *sql.DB, name string) *jwt.Token {
 	user.Session = expirationTime
 	user.LastSeen = time.Now()
 	log.Println("Updating user session for user : ", user)
-	user.Update(db)
+	user.UpdateUser(db)
 	token.Claims.Valid()
 	return token
 }
@@ -128,5 +128,5 @@ func loginAccount(db *sql.DB, auth RequestAuthJSON) token_string {
 func logoutAccount(db *sql.DB, username username) {
 	user := getUser(db, username)
 	user.Session = time.Now()
-	user.UpdateSession(db)
+	user.UpdateUserSession(db)
 }

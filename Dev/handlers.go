@@ -156,14 +156,14 @@ func CreateAccount(db *sql.DB, input service_input) service_output {
 }
 
 func GetPrivateProfile(name username, db *sql.DB, _ service_input) service_output {
-	result := OutputJSON{Success: true, Message: "Profile", Result: getUser(db, name).Private()}
+	result := OutputJSON{Success: true, Message: "Profile", Result: getUser(db, name).Private(db)}
 	return service_output{msg: result}
 }
 
 func GetPublicProfile(db *sql.DB, input service_input) service_output {
 	var profile RequestPublicUserProfileJSON
 	getClientMessage(input, &profile)
-	result := OutputJSON{Success: true, Message: "Profile", Result: getUser(db, username(profile.Username)).Public()}
+	result := OutputJSON{Success: true, Message: "Profile", Result: getUser(db, username(profile.Username)).Public(db)}
 	return service_output{msg: result}
 }
 
@@ -174,7 +174,7 @@ func Logout(name username, db *sql.DB, input service_input) service_output {
 
 func DeleteAccount(name username, db *sql.DB, input service_input) service_output {
 	logoutAccount(db, name)
-	getUser(db, name).Delete(db)
+	getUser(db, name).DeleteUser(db)
 	return service_output{msg: OutputJSON{Success: true, Message: "Deleted Account"}}
 }
 
@@ -190,6 +190,14 @@ func RandomShitPost(service_input) service_output {
 	return service_output{msg: OutputJSON{Success: true, Message: "Random Shitpost", Result: shitpost.Url}}
 }
 
+func SavePost(name username, db *sql.DB, input service_input) service_output {
+	var post SaveShitPostJSON
+	getClientMessage(input, &post)
+	SaveShitPost(db, name, post)
+	showShitPostTable()
+	return service_output{msg: OutputJSON{Success: true, Message: "Saved Shitpost"}}
+}
+
 func HandlersMap() map[string]Service {
 	handlers := make(map[string]Service)
 	handlers["/login"] = DataBasedService{LoginWithRemember, AcceptableMethods{Put: true}}
@@ -199,5 +207,6 @@ func HandlersMap() map[string]Service {
 	handlers["/logout"] = AuthServiceHandle{Logout, AcceptableMethods{Put: true}}
 	handlers["/delete_account"] = AuthServiceHandle{DeleteAccount, AcceptableMethods{Delete: true}}
 	handlers["/random_shitpost"] = basic_service{RandomShitPost, AcceptableMethods{Get: true}}
+	handlers["/save_shitpost"] = AuthServiceHandle{SavePost, AcceptableMethods{Post: true}}
 	return handlers
 }
