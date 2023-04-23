@@ -9,9 +9,11 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-type SimpleClaims struct {
-	Username  string
-	ExpiresAt string
+const sessionDuration = 1 * time.Hour
+
+type simple_claims struct {
+	username  string
+	expiresAt string
 }
 
 func parseTime(timeStr string) time.Time {
@@ -24,13 +26,13 @@ func formatTime(t time.Time) string {
 	return t.Format(time.ANSIC)
 }
 
-func (c SimpleClaims) Exp() time.Time {
-	exp, err := time.Parse(time.ANSIC, c.ExpiresAt)
+func (c simple_claims) Exp() time.Time {
+	exp, err := time.Parse(time.ANSIC, c.expiresAt)
 	ServerRuntimeError("Error while parsing time", err)
 	return exp
 }
 
-func (c SimpleClaims) Valid() error {
+func (c simple_claims) Valid() error {
 	db := openDatabase()
 	defer closeDatabase(db)
 	if c.Exp().IsZero() {
@@ -39,84 +41,78 @@ func (c SimpleClaims) Valid() error {
 	if c.Exp().Before(time.Now()) {
 		OnlyServerError("Token is expired")
 	}
-	user := getUser(db, c.Username)
-	if formatTime(user.Session) != c.ExpiresAt {
-		OnlyServerError(fmt.Sprintf("The Session Used is Invalid %s", c.Username))
+	user := getUser(db, username(c.username))
+	if formatTime(user.session) != c.expiresAt {
+		OnlyServerError(fmt.Sprintf("The Session Used is Invalid %s", c.username))
 	}
 	return nil
 }
 
 var serverKey = []byte("This is a fun serverkey")
 
-func tokenToString(token *jwt.Token) tokenString {
+func tokenToString(token *jwt.Token) token_string {
 	out, err := token.SignedString(serverKey)
-	if err != nil {
-		ServerRuntimeError("Error While Converting JWT Token to string", err)
-	}
-	return tokenString(out)
+	ServerRuntimeError("Error While Converting JWT Token to string", err)
+	return token_string(out)
 }
 
-func tokenFromString(tokenString tokenString) *jwt.Token {
-	token, err := jwt.ParseWithClaims(string(tokenString), &SimpleClaims{}, func(token *jwt.Token) (interface{}, error) {
+func tokenFromString(tokenString token_string) *jwt.Token {
+	token, err := jwt.ParseWithClaims(string(tokenString), &simple_claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			OnlyServerError("Unexpected signing method")
 			return nil, nil
 		}
 		return serverKey, nil
 	})
-	if err != nil {
-		ServerRuntimeError("Error While Parsing JWT Token from string", err)
-	}
+	ServerRuntimeError("Error While Parsing JWT Token from string", err)
 	return token
 }
 
-func claimsFromString(tokenString tokenString) SimpleClaims {
+func claimsFromString(tokenString token_string) simple_claims {
 	token := tokenFromString(tokenString)
-	claims, ok := token.Claims.(*SimpleClaims)
+	claims, ok := token.Claims.(*simple_claims)
 	if !ok {
-		OnlyServerError("Error While Parsing JWT Token from string")
+		OnlyServerError("Error While Parsing Claims from string")
 	}
 	return *claims
 }
 
-const sessionDuration = 1 * time.Hour
-
-func createToken(db *sql.DB, username string) *jwt.Token {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, SimpleClaims{})
+func createToken(db *sql.DB, name string) *jwt.Token {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, simple_claims{})
 	expirationTime := time.Now().Add(sessionDuration)
 	expirationTimeStr := expirationTime.Format(time.ANSIC)
-	claims := SimpleClaims{ExpiresAt: expirationTimeStr, Username: username}
+	claims := simple_claims{expiresAt: expirationTimeStr, username: name}
 	token.Claims = claims
-	user := getUser(db, username)
-	user.Session = expirationTime
-	user.UpdateRow(db)
+	user := getUser(db, username(name))
+	user.session = expirationTime
+	user.Update(db)
 	token.Claims.Valid()
 	return token
 }
 
-func verifySession(tokenString tokenString) username {
+func verifySession(tokenString token_string) username {
 	if tokenString == "" {
 		OnlyServerError("User is not logged in")
 	}
 	claims := claimsFromString(tokenString)
 	claims.Valid()
-	return username(claims.Username)
+	return username(claims.username)
 }
 
 func isLogged(db *sql.DB, username username) bool {
-	user := getUser(db, string(username))
-	return user.Session.After(time.Now())
+	user := getUser(db, username)
+	return user.session.After(time.Now())
 }
 
-func extendSession(db *sql.DB, username string) tokenString {
+func extendSession(db *sql.DB, username string) token_string {
 	log.Println("Extending Session for user : ", username)
 	token := createToken(db, username)
 	return tokenToString(token)
 }
 
-func loginAccount(db *sql.DB, auth AuthJSON) tokenString {
-	user := getUser(db, auth.Login)
-	if user.Password != auth.Mdp {
+func loginAccount(db *sql.DB, auth AuthJSON) token_string {
+	user := getUser(db, username(auth.Login))
+	if user.password != auth.Mdp {
 		OnlyServerError("Invalid Password")
 	}
 	token := createToken(db, auth.Login)
@@ -125,7 +121,7 @@ func loginAccount(db *sql.DB, auth AuthJSON) tokenString {
 }
 
 func logoutAccount(db *sql.DB, username username) {
-	user := getUser(db, string(username))
-	user.Session = time.Now()
+	user := getUser(db, username)
+	user.session = time.Now()
 	user.UpdateSession(db)
 }

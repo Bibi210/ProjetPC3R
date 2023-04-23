@@ -8,30 +8,30 @@ import (
 	"net/http"
 )
 
-type errorStruct struct {
+type error_struct struct {
 	err error
 	s   string
 }
 
-func (e *errorStruct) Error() string {
+func (e *error_struct) Error() string {
 	if e.err == nil {
 		return fmt.Sprintf("ServerSIDE error: %s", e.s)
 	}
 	return fmt.Sprintf("ServerSIDE error: %s due to -> Runtime error %s", e.s, e.err.Error())
 }
 func OnlyServerError(text string) {
-	out := &errorStruct{nil, text}
+	out := &error_struct{nil, text}
 	panic(out)
 }
 func ServerRuntimeError(text string, err error) {
 	if err == nil {
 		return
 	}
-	out := &errorStruct{err, text}
+	out := &error_struct{err, text}
 	panic(out)
 }
 
-func errorCatcher(w http.ResponseWriter) {
+func ErrorCatcher(w http.ResponseWriter) {
 	if r := recover(); r != nil {
 		err := r.(error)
 		outmsg := structToJSON(OutputJSON{Success: false, Message: err.Error()})
@@ -40,7 +40,7 @@ func errorCatcher(w http.ResponseWriter) {
 	}
 }
 
-func cleanCloser(db *sql.DB) {
+func CleanCloser(db *sql.DB) {
 	if r := recover(); r != nil {
 		err := r.(error)
 		closeDatabase(db)
@@ -49,14 +49,14 @@ func cleanCloser(db *sql.DB) {
 	closeDatabase(db)
 }
 
-type acceptableMethods struct {
+type AcceptableMethods struct {
 	Get    bool
 	Post   bool
 	Put    bool
 	Delete bool
 }
 
-func checkMethod(method string, acceptable acceptableMethods) {
+func CheckMethod(method string, acceptable AcceptableMethods) {
 	switch method {
 	case "GET":
 		if acceptable.Get {

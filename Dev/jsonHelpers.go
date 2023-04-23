@@ -2,19 +2,7 @@ package main
 
 import (
 	"encoding/json"
-
-	"net/http"
 )
-
-/* func parseRequestToStruct(r *http.Request, t any) {
-	bytes := parseRequestToBytes(r)
-	bytesToStruct(bytes, t)
-}
- */
-func parseResponseToStruct(r *http.Response, t any) {
-	bytes := parseResponseToBytes(r)
-	bytesToStruct(bytes, t)
-}
 
 func bytesToStruct(bytes []byte, buffer any) {
 	if json.Unmarshal(bytes, buffer) != nil {
@@ -22,7 +10,7 @@ func bytesToStruct(bytes []byte, buffer any) {
 	}
 }
 
-func stringToStruct(s handlerInput, buffer any) {
+func getClientMessage(s service_input, buffer any) {
 	bytesToStruct([]byte(s.msg), buffer)
 }
 

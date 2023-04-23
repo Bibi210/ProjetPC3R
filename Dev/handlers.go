@@ -32,52 +32,58 @@ func parseResponseToBytes(r *http.Response) []byte {
 	return body
 }
 
-func getToken(r *http.Request) tokenString {
+func getToken(r *http.Request) token_string {
 	cookie, err := r.Cookie("Session")
 	if err != nil {
 		return ""
 	}
-	return tokenString(cookie.Value)
+	return token_string(cookie.Value)
 }
-func parseRequest(r *http.Request) handlerInput {
-	return handlerInput{parseRequestToString(r), getToken(r)}
+func parseRequest(r *http.Request) service_input {
+	return service_input{parseRequestToString(r), getToken(r)}
+}
+func parseResponseToStruct(r *http.Response, t any) {
+	bytes := parseResponseToBytes(r)
+	bytesToStruct(bytes, t)
 }
 
-type tokenString string
-type handlerInput struct {
-	msg     string
-	session tokenString
-}
+type token_string string
 type username string
-type handlerOutput struct {
+
+type service_input struct {
+	msg     string
+	session token_string
+}
+type service_output struct {
 	msg            OutputJSON
-	newTokenString tokenString
+	newTokenString token_string
 }
 
-type HttpHandler func(http.ResponseWriter, *http.Request)
-type ServiceFunc func(handlerInput) handlerOutput
-type DataServiceFunc func(*sql.DB, handlerInput) handlerOutput
-type AuthServiceFunc func(username, *sql.DB, handlerInput) handlerOutput
+type httpValidHandler func(http.ResponseWriter, *http.Request)
+type basicServiceFunc func(service_input) service_output
+type dataServiceFunc func(*sql.DB, service_input) service_output
+type authServiceFunc func(username, *sql.DB, service_input) service_output
 
-type ServerHandle interface { // interface for handlers
-	Handle() HttpHandler
-	AcceptableMethods() acceptableMethods
+type Service interface {
+	ToHandler() httpValidHandler
+	acceptableMethods() AcceptableMethods
 }
 
-type ServiceHandle struct {
-	handler ServiceFunc
-	methods acceptableMethods
+type basic_service struct {
+	service basicServiceFunc
+	methods AcceptableMethods
 }
 
-func (h ServiceHandle) Handle() HttpHandler {
+func (h basic_service) ToHandler() httpValidHandler {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer errorCatcher(w)
-		checkMethod(r.Method, h.methods)
+		defer ErrorCatcher(w)
+		CheckMethod(r.Method, h.methods)
 		w.Header().Set("Content-Type", "application/json")
 		log.Printf("Request: %s %s", r.Method, r.URL.Path)
-		output := h.handler(parseRequest(r))
+		output := h.service(parseRequest(r))
 		outmsg := structToJSON(output.msg)
 		if output.newTokenString != "" {
+			// Write new token to cookie
 			cookie_lifetime := int(sessionDuration.Seconds())
 			cookie := http.Cookie{Name: "Session", Value: string(output.newTokenString), MaxAge: cookie_lifetime}
 			http.SetCookie(w, &cookie)
@@ -87,36 +93,36 @@ func (h ServiceHandle) Handle() HttpHandler {
 	}
 }
 
-func (h ServiceHandle) AcceptableMethods() acceptableMethods {
+func (h basic_service) acceptableMethods() AcceptableMethods {
 	return h.methods
 }
 
-type DataServiceHandle struct {
-	handler DataServiceFunc
-	methods acceptableMethods
+type DataBasedService struct {
+	service dataServiceFunc
+	methods AcceptableMethods
 }
 
-func (h DataServiceHandle) Handle() HttpHandler {
-	f := func(input handlerInput) handlerOutput {
+func (h DataBasedService) ToHandler() httpValidHandler {
+	f := func(input service_input) service_output {
 		db := openDatabase()
-		defer cleanCloser(db)
-		return h.handler(db, input)
+		defer CleanCloser(db)
+		return h.service(db, input)
 
 	}
-	return ServiceHandle{f, h.AcceptableMethods()}.Handle()
+	return basic_service{f, h.acceptableMethods()}.ToHandler()
 }
 
-func (h DataServiceHandle) AcceptableMethods() acceptableMethods {
+func (h DataBasedService) acceptableMethods() AcceptableMethods {
 	return h.methods
 }
 
 type AuthServiceHandle struct {
-	handler AuthServiceFunc
-	methods acceptableMethods
+	handler authServiceFunc
+	methods AcceptableMethods
 }
 
-func (h AuthServiceHandle) Handle() HttpHandler {
-	f := func(db *sql.DB, input handlerInput) handlerOutput {
+func (h AuthServiceHandle) ToHandler() httpValidHandler {
+	f := func(db *sql.DB, input service_input) service_output {
 		username := verifySession(input.session)
 		output := h.handler(username, db, input)
 		if !isLogged(db, username) {
@@ -126,65 +132,64 @@ func (h AuthServiceHandle) Handle() HttpHandler {
 
 		return output
 	}
-	return DataServiceHandle{f, h.AcceptableMethods()}.Handle()
+	return DataBasedService{f, h.acceptableMethods()}.ToHandler()
 }
 
-func (h AuthServiceHandle) AcceptableMethods() acceptableMethods {
+func (h AuthServiceHandle) acceptableMethods() AcceptableMethods {
 	return h.methods
 }
 
-func LoginWithRemember(db *sql.DB, input handlerInput) handlerOutput {
+func LoginWithRemember(db *sql.DB, input service_input) service_output {
 	var auth AuthJSON
-	stringToStruct(input, &auth)
+	getClientMessage(input, &auth)
 	token := loginAccount(db, auth)
 	msg := OutputJSON{Success: true, Message: "Logged in", Result: token}
-	return handlerOutput{msg, token}
+	return service_output{msg, token}
 }
 
-func CreateAccount(db *sql.DB, input handlerInput) handlerOutput {
+func CreateAccount(db *sql.DB, input service_input) service_output {
 	var auth AuthJSON
-	stringToStruct(input, &auth)
-	addToDatabase(db, auth)
+	getClientMessage(input, &auth)
+	addUserToDatabase(db, auth)
 	result := OutputJSON{Success: true, Message: "Account Created"}
-	return handlerOutput{msg: result}
+	return service_output{msg: result}
 }
 
-func GetPrivateProfile(name username, db *sql.DB, _ handlerInput) handlerOutput {
-	result := OutputJSON{Success: true, Message: "Profile", Result: getUserData(db, name)}
-	return handlerOutput{msg: result}
+func GetPrivateProfile(name username, db *sql.DB, _ service_input) service_output {
+	result := OutputJSON{Success: true, Message: "Profile", Result: getUserProfile(db, name)}
+	return service_output{msg: result}
 }
 
-func Logout(name username, db *sql.DB, input handlerInput) handlerOutput {
+func Logout(name username, db *sql.DB, input service_input) service_output {
 	logoutAccount(db, name)
-	return handlerOutput{msg: OutputJSON{Success: true, Message: "Logged out"}}
+	return service_output{msg: OutputJSON{Success: true, Message: "Logged out"}}
 }
 
-func DeleteAccount(name username, db *sql.DB, input handlerInput) handlerOutput {
+func DeleteAccount(name username, db *sql.DB, input service_input) service_output {
 	logoutAccount(db, name)
-	deleteFromDatabase(db, name)
-	return handlerOutput{msg: OutputJSON{Success: true, Message: "Deleted Account"}}
+	getUser(db, name).Delete(db)
+	return service_output{msg: OutputJSON{Success: true, Message: "Deleted Account"}}
 }
 
-func RandomShitPost(handlerInput) handlerOutput {
+func RandomShitPost(service_input) service_output {
 	response, err := http.Get("https://api.thedailyshitpost.net/random")
-	if err != nil {
-		ServerRuntimeError("Error while getting shitpost", err)
-	}
+	ServerRuntimeError("Error while getting shitpost", err)
+
 	var shitpost RandomShitPostJSON
 	parseResponseToStruct(response, &shitpost)
 	if shitpost.Error {
 		OnlyServerError("Remote Error while getting RandomShitpost")
 	}
-	return handlerOutput{msg: OutputJSON{Success: true, Message: "Random Shitpost", Result: shitpost.Url}}
+	return service_output{msg: OutputJSON{Success: true, Message: "Random Shitpost", Result: shitpost.Url}}
 }
 
-func HandlersMap() map[string]ServerHandle {
-	handlers := make(map[string]ServerHandle)
-	handlers["/login"] = DataServiceHandle{LoginWithRemember, acceptableMethods{Put: true}}
-	handlers["/create_account"] = DataServiceHandle{CreateAccount, acceptableMethods{Post: true}}
-	handlers["/get_private_profile"] = AuthServiceHandle{GetPrivateProfile, acceptableMethods{Get: true}}
-	handlers["/logout"] = AuthServiceHandle{Logout, acceptableMethods{Put: true}}
-	handlers["/delete_account"] = AuthServiceHandle{DeleteAccount, acceptableMethods{Delete: true}}
-	handlers["/random_shitpost"] = ServiceHandle{RandomShitPost, acceptableMethods{Get: true}}
+func HandlersMap() map[string]Service {
+	handlers := make(map[string]Service)
+	handlers["/login"] = DataBasedService{LoginWithRemember, AcceptableMethods{Put: true}}
+	handlers["/create_account"] = DataBasedService{CreateAccount, AcceptableMethods{Post: true}}
+	handlers["/get_private_profile"] = AuthServiceHandle{GetPrivateProfile, AcceptableMethods{Get: true}}
+	handlers["/logout"] = AuthServiceHandle{Logout, AcceptableMethods{Put: true}}
+	handlers["/delete_account"] = AuthServiceHandle{DeleteAccount, AcceptableMethods{Delete: true}}
+	handlers["/random_shitpost"] = basic_service{RandomShitPost, AcceptableMethods{Get: true}}
 	return handlers
 }

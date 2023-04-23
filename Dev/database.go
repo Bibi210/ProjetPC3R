@@ -1,12 +1,10 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
-
 	"time"
-
-	"database/sql"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -24,17 +22,14 @@ import (
 /* Get User ShitPosts ->  Select * from ShitPost where Poster = Get User ID */
 /* Get User Comments -> Select * from Comments where Poster = Get User ID*/
 
-func addToDatabase(db *sql.DB, auth AuthJSON) {
-	createUser(db, auth.Login, auth.Mdp)
+func addUserToDatabase(db *sql.DB, auth AuthJSON) {
+	user := user_row{username: auth.Login, password: auth.Mdp}
+	user.Create(db)
 }
 
-func deleteFromDatabase(db *sql.DB, username username) {
-	deleteUser(db, string(username))
-}
-
-func getUserData(db *sql.DB, username username) UserProfileJSON {
-	user := getUser(db, string(username))
-	return UserProfileJSON{Username: user.Username, UserID: user.UserID}
+func getUserProfile(db *sql.DB, username username) UserProfileJSON {
+	user := getUser(db, username)
+	return UserProfileJSON{Username: user.username, UserID: user.userID}
 }
 
 const createUsers = `CREATE TABLE IF NOT EXISTS Users (
@@ -45,56 +40,51 @@ const createUsers = `CREATE TABLE IF NOT EXISTS Users (
 	LastSeen TEXT
 );`
 
-type User struct {
-	UserID   int
-	Username string
-	Password string
-	Session  time.Time
-	LastSeen time.Time
+type user_row struct {
+	userID   int
+	username string
+	password string
+	session  time.Time
+	lastSeen time.Time
 }
 
-func (u *User) String() string {
-	return fmt.Sprintf("UserID : %d | Username : %s | Password : %s | Session : %s | LastSeen : %s", u.UserID, u.Username, u.Password, formatTime(u.Session), formatTime(u.LastSeen))
+func (u *user_row) String() string {
+	return fmt.Sprintf("UserID : %d | Username : %s | Password : %s | Session : %s | LastSeen : %s", u.userID, u.username, u.password, formatTime(u.session), formatTime(u.lastSeen))
 }
 
-func ReadFromRow(row *sql.Rows) User {
-	u := User{}
+func ReadFromRow(row *sql.Rows) user_row {
+	u := user_row{}
 	var lastSeen string
 	var session string
-	ServerRuntimeError("Error While Reading Row", row.Scan(&u.UserID, &u.Username, &u.Password, &session, &lastSeen))
-	u.LastSeen = parseTime(lastSeen)
-	u.Session = parseTime(session)
+	ServerRuntimeError("Error While Reading Row", row.Scan(&u.userID, &u.username, &u.password, &session, &lastSeen))
+	u.lastSeen = parseTime(lastSeen)
+	u.session = parseTime(session)
 	return u
 }
 
-func (u *User) InsertRow(c *sql.DB) {
-	Execute(c, "INSERT INTO Users (Username, Password, Session, LastSeen) VALUES (?, ?, ?, ?)", u.Username, u.Password, formatTime(u.Session), formatTime(u.LastSeen))
+func (u *user_row) Create(c *sql.DB) {
+	executeRequest(c, "INSERT INTO Users (Username, Password, Session, LastSeen) VALUES (?, ?, ?, ?)", u.username, u.password, formatTime(u.session), formatTime(u.lastSeen))
 }
 
-func (u *User) UpdateRow(c *sql.DB) {
-	Execute(c, "UPDATE Users SET Username = ?, Password = ?, Session = ?, LastSeen = ? WHERE UserID = ?", u.Username, u.Password, formatTime(u.Session), formatTime(u.LastSeen), u.UserID)
+func (u *user_row) Update(c *sql.DB) {
+	executeRequest(c, "UPDATE Users SET Username = ?, Password = ?, Session = ?, LastSeen = ? WHERE UserID = ?", u.username, u.password, formatTime(u.session), formatTime(u.lastSeen), u.userID)
 }
 
-func (u *User) UpdateSession(c *sql.DB) {
-	Execute(c, "UPDATE Users SET Session = ?, LastSeen = ? WHERE UserID = ?", formatTime(u.Session), formatTime(u.LastSeen), u.UserID)
+func (u *user_row) UpdateSession(c *sql.DB) {
+	executeRequest(c, "UPDATE Users SET Session = ?, LastSeen = ? WHERE UserID = ?", formatTime(u.session), formatTime(u.lastSeen), u.userID)
 }
 
-func getUser(c *sql.DB, username string) User {
+func (u user_row) Delete(c *sql.DB) {
+	executeRequest(c, "DELETE FROM Users WHERE UserID = ?", u.userID)
+}
+
+func getUser(c *sql.DB, username username) user_row {
 	rows := query(c, "SELECT * FROM Users WHERE Username = ?", username)
 	defer rows.Close()
 	if !rows.Next() {
 		OnlyServerError("User don't exist")
 	}
 	return ReadFromRow(rows)
-}
-
-func deleteUser(c *sql.DB, username string) {
-	Execute(c, "DELETE FROM Users WHERE Username = ?", username)
-}
-
-func createUser(co *sql.DB, username, password string) {
-	user := User{Username: username, Password: password}
-	user.InsertRow(co)
 }
 
 func showUserTable() {
@@ -153,15 +143,10 @@ func openDatabase() *sql.DB {
 }
 
 func closeDatabase(db *sql.DB) {
-	err := db.Close()
-	if err != nil {
-		log.Println(err)
-		ServerRuntimeError("Error While Closing Database", db.Close())
-	}
-
+	ServerRuntimeError("Error While Closing Database", db.Close())
 }
 
-func Execute(c *sql.DB, query string, args ...interface{}) sql.Result {
+func executeRequest(c *sql.DB, query string, args ...interface{}) sql.Result {
 	res, err := c.Exec(query, args...)
 	ServerRuntimeError("Error While Executing Query", err)
 	return res
@@ -176,22 +161,22 @@ func query(c *sql.DB, query string, args ...interface{}) *sql.Rows {
 func createDatabase() {
 	c := openDatabase()
 	defer closeDatabase(c)
-	Execute(c, createUsers)
-	Execute(c, createShitPost)
-	Execute(c, createMsg)
-	Execute(c, createDM)
-	Execute(c, createComments)
+	executeRequest(c, createUsers)
+	executeRequest(c, createShitPost)
+	executeRequest(c, createMsg)
+	executeRequest(c, createDM)
+	executeRequest(c, createComments)
 
 }
 
 func deleteDatabase() {
 	c := openDatabase()
 	defer closeDatabase(c)
-	Execute(c, "DROP TABLE Users")
-	Execute(c, "DROP TABLE ShitPost")
-	Execute(c, "DROP TABLE Msg")
-	Execute(c, "DROP TABLE DM")
-	Execute(c, "DROP TABLE Comments")
+	executeRequest(c, "DROP TABLE Users")
+	executeRequest(c, "DROP TABLE ShitPost")
+	executeRequest(c, "DROP TABLE Msg")
+	executeRequest(c, "DROP TABLE DM")
+	executeRequest(c, "DROP TABLE Comments")
 }
 
 func shutdownDatabase(cleanDatabase bool) {
