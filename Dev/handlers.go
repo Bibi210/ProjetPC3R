@@ -125,7 +125,7 @@ func (h AuthServiceHandle) ToHandler() httpValidHandler {
 	f := func(db *sql.DB, input service_input) service_output {
 		username := verifySession(input.session)
 		output := h.handler(username, db, input)
-		if !isLogged(db, username) {
+		if isLogged(db, username) {
 			output.newTokenString =
 				extendSession(db, string(username))
 		}
@@ -140,7 +140,7 @@ func (h AuthServiceHandle) acceptableMethods() AcceptableMethods {
 }
 
 func LoginWithRemember(db *sql.DB, input service_input) service_output {
-	var auth AuthJSON
+	var auth RequestAuthJSON
 	getClientMessage(input, &auth)
 	token := loginAccount(db, auth)
 	msg := OutputJSON{Success: true, Message: "Logged in", Result: token}
@@ -148,7 +148,7 @@ func LoginWithRemember(db *sql.DB, input service_input) service_output {
 }
 
 func CreateAccount(db *sql.DB, input service_input) service_output {
-	var auth AuthJSON
+	var auth RequestAuthJSON
 	getClientMessage(input, &auth)
 	addUserToDatabase(db, auth)
 	result := OutputJSON{Success: true, Message: "Account Created"}
@@ -156,7 +156,14 @@ func CreateAccount(db *sql.DB, input service_input) service_output {
 }
 
 func GetPrivateProfile(name username, db *sql.DB, _ service_input) service_output {
-	result := OutputJSON{Success: true, Message: "Profile", Result: getUserProfile(db, name)}
+	result := OutputJSON{Success: true, Message: "Profile", Result: getUser(db, name).Private()}
+	return service_output{msg: result}
+}
+
+func GetPublicProfile(db *sql.DB, input service_input) service_output {
+	var profile RequestPublicUserProfileJSON
+	getClientMessage(input, &profile)
+	result := OutputJSON{Success: true, Message: "Profile", Result: getUser(db, username(profile.Username)).Public()}
 	return service_output{msg: result}
 }
 
@@ -175,7 +182,7 @@ func RandomShitPost(service_input) service_output {
 	response, err := http.Get("https://api.thedailyshitpost.net/random")
 	ServerRuntimeError("Error while getting shitpost", err)
 
-	var shitpost RandomShitPostJSON
+	var shitpost ResponseRandomShitPostJSON
 	parseResponseToStruct(response, &shitpost)
 	if shitpost.Error {
 		OnlyServerError("Remote Error while getting RandomShitpost")
@@ -188,6 +195,7 @@ func HandlersMap() map[string]Service {
 	handlers["/login"] = DataBasedService{LoginWithRemember, AcceptableMethods{Put: true}}
 	handlers["/create_account"] = DataBasedService{CreateAccount, AcceptableMethods{Post: true}}
 	handlers["/get_private_profile"] = AuthServiceHandle{GetPrivateProfile, AcceptableMethods{Get: true}}
+	handlers["/get_public_profile"] = DataBasedService{GetPublicProfile, AcceptableMethods{Get: true}}
 	handlers["/logout"] = AuthServiceHandle{Logout, AcceptableMethods{Put: true}}
 	handlers["/delete_account"] = AuthServiceHandle{DeleteAccount, AcceptableMethods{Delete: true}}
 	handlers["/random_shitpost"] = basic_service{RandomShitPost, AcceptableMethods{Get: true}}

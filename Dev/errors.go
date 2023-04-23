@@ -36,6 +36,7 @@ func ErrorCatcher(w http.ResponseWriter) {
 		err := r.(error)
 		outmsg := structToJSON(OutputJSON{Success: false, Message: err.Error()})
 		log.Printf("Error: %s", err.Error())
+		showUserTable()
 		io.WriteString(w, outmsg)
 	}
 }

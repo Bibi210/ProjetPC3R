@@ -30,17 +30,22 @@ type OutputJSON struct {
 	Result  any
 }
 
-type AuthJSON struct {
-	Login string
-	Mdp   string
-}
-
-type RandomShitPostJSON struct {
+type ResponseRandomShitPostJSON struct {
 	Url   string
 	Error bool
 }
 
-type UserProfileJSON struct {
+type ResponseUserProfileJSON struct {
 	UserID   int
+	Username string
+}
+
+/* ClientMessages */
+type RequestAuthJSON struct {
+	Login string
+	Mdp   string
+}
+
+type RequestPublicUserProfileJSON struct {
 	Username string
 }

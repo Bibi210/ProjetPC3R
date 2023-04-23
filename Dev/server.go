@@ -9,6 +9,9 @@ import (
 	"os/signal"
 )
 
+var cleanDatabase = true
+
+
 func bootServer(port uint16) {
 	if port <= 1024 {
 		log.Fatal("port is too small")
@@ -36,8 +39,6 @@ func shutdownListener() {
 	shutdownDatabase(cleanDatabase)
 	os.Exit(0)
 }
-
-var cleanDatabase = false
 
 func main() {
 	createDatabase()

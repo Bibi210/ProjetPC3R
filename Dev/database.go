@@ -22,14 +22,9 @@ import (
 /* Get User ShitPosts ->  Select * from ShitPost where Poster = Get User ID */
 /* Get User Comments -> Select * from Comments where Poster = Get User ID*/
 
-func addUserToDatabase(db *sql.DB, auth AuthJSON) {
-	user := user_row{username: auth.Login, password: auth.Mdp}
+func addUserToDatabase(db *sql.DB, auth RequestAuthJSON) {
+	user := user_row{username: auth.Login, password: auth.Mdp, Session: time.Now(), LastSeen: time.Now()}
 	user.Create(db)
-}
-
-func getUserProfile(db *sql.DB, username username) UserProfileJSON {
-	user := getUser(db, username)
-	return UserProfileJSON{Username: user.username, UserID: user.userID}
 }
 
 const createUsers = `CREATE TABLE IF NOT EXISTS Users (
@@ -44,12 +39,12 @@ type user_row struct {
 	userID   int
 	username string
 	password string
-	session  time.Time
-	lastSeen time.Time
+	Session  time.Time
+	LastSeen time.Time
 }
 
 func (u *user_row) String() string {
-	return fmt.Sprintf("UserID : %d | Username : %s | Password : %s | Session : %s | LastSeen : %s", u.userID, u.username, u.password, formatTime(u.session), formatTime(u.lastSeen))
+	return fmt.Sprintf("UserID : %d | Username : %s | Password : %s | Session : %s | LastSeen : %s", u.userID, u.username, u.password, formatTime(u.Session), formatTime(u.LastSeen))
 }
 
 func ReadFromRow(row *sql.Rows) user_row {
@@ -57,25 +52,35 @@ func ReadFromRow(row *sql.Rows) user_row {
 	var lastSeen string
 	var session string
 	ServerRuntimeError("Error While Reading Row", row.Scan(&u.userID, &u.username, &u.password, &session, &lastSeen))
-	u.lastSeen = parseTime(lastSeen)
-	u.session = parseTime(session)
+
+	u.LastSeen = parseTime(lastSeen)
+	u.Session = parseTime(session)
+
 	return u
 }
 
 func (u *user_row) Create(c *sql.DB) {
-	executeRequest(c, "INSERT INTO Users (Username, Password, Session, LastSeen) VALUES (?, ?, ?, ?)", u.username, u.password, formatTime(u.session), formatTime(u.lastSeen))
+	executeRequest(c, "INSERT INTO Users (Username, Password, Session, LastSeen) VALUES (?, ?, ?, ?)", u.username, u.password, formatTime(u.Session), formatTime(u.LastSeen))
 }
 
 func (u *user_row) Update(c *sql.DB) {
-	executeRequest(c, "UPDATE Users SET Username = ?, Password = ?, Session = ?, LastSeen = ? WHERE UserID = ?", u.username, u.password, formatTime(u.session), formatTime(u.lastSeen), u.userID)
+	executeRequest(c, "UPDATE Users SET Username = ?, Password = ?, Session = ?, LastSeen = ? WHERE UserID = ?", u.username, u.password, formatTime(u.Session), formatTime(u.LastSeen), u.userID)
 }
 
 func (u *user_row) UpdateSession(c *sql.DB) {
-	executeRequest(c, "UPDATE Users SET Session = ?, LastSeen = ? WHERE UserID = ?", formatTime(u.session), formatTime(u.lastSeen), u.userID)
+	executeRequest(c, "UPDATE Users SET Session = ?, LastSeen = ? WHERE UserID = ?", formatTime(u.Session), formatTime(u.LastSeen), u.userID)
 }
 
 func (u user_row) Delete(c *sql.DB) {
 	executeRequest(c, "DELETE FROM Users WHERE UserID = ?", u.userID)
+}
+
+func (u user_row) Public() RequestPublicUserProfileJSON {
+	return RequestPublicUserProfileJSON{Username: u.username}
+}
+
+func (u user_row) Private() ResponseUserProfileJSON {
+	return ResponseUserProfileJSON{Username: u.username, UserID: u.userID}
 }
 
 func getUser(c *sql.DB, username username) user_row {
@@ -85,6 +90,12 @@ func getUser(c *sql.DB, username username) user_row {
 		OnlyServerError("User don't exist")
 	}
 	return ReadFromRow(rows)
+}
+
+func isUserExist(c *sql.DB, username username) bool {
+	rows := query(c, "SELECT * FROM Users WHERE Username = ?", username)
+	defer rows.Close()
+	return rows.Next()
 }
 
 func showUserTable() {
@@ -137,7 +148,7 @@ const createComments = `CREATE TABLE IF NOT EXISTS Comments (
 );`
 
 func openDatabase() *sql.DB {
-	db, err := sql.Open("sqlite3", "./information.db")
+	db, err := sql.Open("sqlite3", "./database.db")
 	ServerRuntimeError("Error While Opening Database", err)
 	return db
 }

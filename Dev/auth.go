@@ -12,8 +12,8 @@ import (
 const sessionDuration = 1 * time.Hour
 
 type simple_claims struct {
-	username  string
-	expiresAt string
+	Username  string
+	ExpiresAt string
 }
 
 func parseTime(timeStr string) time.Time {
@@ -27,7 +27,7 @@ func formatTime(t time.Time) string {
 }
 
 func (c simple_claims) Exp() time.Time {
-	exp, err := time.Parse(time.ANSIC, c.expiresAt)
+	exp, err := time.Parse(time.ANSIC, c.ExpiresAt)
 	ServerRuntimeError("Error while parsing time", err)
 	return exp
 }
@@ -41,9 +41,9 @@ func (c simple_claims) Valid() error {
 	if c.Exp().Before(time.Now()) {
 		OnlyServerError("Token is expired")
 	}
-	user := getUser(db, username(c.username))
-	if formatTime(user.session) != c.expiresAt {
-		OnlyServerError(fmt.Sprintf("The Session Used is Invalid %s", c.username))
+	user := getUser(db, username(c.Username))
+	if formatTime(user.Session) != c.ExpiresAt {
+		OnlyServerError(fmt.Sprintf("The Session Used is Invalid %s", c.Username))
 	}
 	return nil
 }
@@ -80,11 +80,13 @@ func claimsFromString(tokenString token_string) simple_claims {
 func createToken(db *sql.DB, name string) *jwt.Token {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, simple_claims{})
 	expirationTime := time.Now().Add(sessionDuration)
-	expirationTimeStr := expirationTime.Format(time.ANSIC)
-	claims := simple_claims{expiresAt: expirationTimeStr, username: name}
+	expirationTimeStr := formatTime(expirationTime)
+	claims := simple_claims{ExpiresAt: expirationTimeStr, Username: name}
 	token.Claims = claims
 	user := getUser(db, username(name))
-	user.session = expirationTime
+	user.Session = expirationTime
+	user.LastSeen = time.Now()
+	log.Println("Updating user session for user : ", user)
 	user.Update(db)
 	token.Claims.Valid()
 	return token
@@ -96,12 +98,15 @@ func verifySession(tokenString token_string) username {
 	}
 	claims := claimsFromString(tokenString)
 	claims.Valid()
-	return username(claims.username)
+	return username(claims.Username)
 }
 
 func isLogged(db *sql.DB, username username) bool {
+	if !isUserExist(db, username) {
+		return false
+	}
 	user := getUser(db, username)
-	return user.session.After(time.Now())
+	return user.Session.After(time.Now())
 }
 
 func extendSession(db *sql.DB, username string) token_string {
@@ -110,7 +115,7 @@ func extendSession(db *sql.DB, username string) token_string {
 	return tokenToString(token)
 }
 
-func loginAccount(db *sql.DB, auth AuthJSON) token_string {
+func loginAccount(db *sql.DB, auth RequestAuthJSON) token_string {
 	user := getUser(db, username(auth.Login))
 	if user.password != auth.Mdp {
 		OnlyServerError("Invalid Password")
@@ -122,6 +127,6 @@ func loginAccount(db *sql.DB, auth AuthJSON) token_string {
 
 func logoutAccount(db *sql.DB, username username) {
 	user := getUser(db, username)
-	user.session = time.Now()
+	user.Session = time.Now()
 	user.UpdateSession(db)
 }
