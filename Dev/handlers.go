@@ -198,15 +198,35 @@ func SavePost(name username, db *sql.DB, input service_input) service_output {
 	return service_output{msg: OutputJSON{Success: true, Message: "Saved Shitpost"}}
 }
 
+type FrontHandler struct {
+	methods AcceptableMethods
+}
+
+func (h FrontHandler) acceptableMethods() AcceptableMethods {
+	return h.methods
+}
+
+func (h FrontHandler) ToHandler() httpValidHandler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./frontend/dist/index.html")
+	}
+}
+
 func HandlersMap() map[string]Service {
 	handlers := make(map[string]Service)
-	handlers["/login"] = DataBasedService{LoginWithRemember, AcceptableMethods{Put: true}}
-	handlers["/create_account"] = DataBasedService{CreateAccount, AcceptableMethods{Post: true}}
-	handlers["/get_private_profile"] = AuthServiceHandle{GetPrivateProfile, AcceptableMethods{Get: true}}
-	handlers["/get_public_profile"] = DataBasedService{GetPublicProfile, AcceptableMethods{Get: true}}
-	handlers["/logout"] = AuthServiceHandle{Logout, AcceptableMethods{Put: true}}
-	handlers["/delete_account"] = AuthServiceHandle{DeleteAccount, AcceptableMethods{Delete: true}}
-	handlers["/random_shitpost"] = basic_service{RandomShitPost, AcceptableMethods{Get: true}}
-	handlers["/save_shitpost"] = AuthServiceHandle{SavePost, AcceptableMethods{Post: true}}
+	handlers["/api/login"] = DataBasedService{LoginWithRemember, AcceptableMethods{Put: true}}
+	handlers["/api/create_account"] = DataBasedService{CreateAccount, AcceptableMethods{Post: true}}
+	handlers["/api/get_private_profile"] = AuthServiceHandle{GetPrivateProfile, AcceptableMethods{Get: true}}
+	handlers["/api/get_public_profile"] = DataBasedService{GetPublicProfile, AcceptableMethods{Get: true}}
+	handlers["/api/logout"] = AuthServiceHandle{Logout, AcceptableMethods{Put: true}}
+	handlers["/api/delete_account"] = AuthServiceHandle{DeleteAccount, AcceptableMethods{Delete: true}}
+	handlers["/api/random_shitpost"] = basic_service{RandomShitPost, AcceptableMethods{Get: true}}
+	handlers["/api/save_shitpost"] = AuthServiceHandle{SavePost, AcceptableMethods{Post: true}}
+	handlers["/login"] = FrontHandler{AcceptableMethods{Get: true}}
+	handlers["/create_account"] = FrontHandler{AcceptableMethods{Get: true}}
+	handlers["/profile"] = FrontHandler{AcceptableMethods{Get: true}}
+	handlers["/logout"] = FrontHandler{AcceptableMethods{Get: true}}
+	handlers["/delete_account"] = FrontHandler{AcceptableMethods{Get: true}}
+	handlers["/"] = FrontHandler{AcceptableMethods{Get: true}}
 	return handlers
 }

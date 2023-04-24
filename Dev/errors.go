@@ -76,5 +76,5 @@ func CheckMethod(method string, acceptable AcceptableMethods) {
 			return
 		}
 	}
-	OnlyServerError(fmt.Sprintf("Method %s is not supported. Accepted %v\n", method, acceptable))
+	OnlyServerError(fmt.Sprintf("Method %s is not supported. Accepted %#v\n", method, acceptable))
 }

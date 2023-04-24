@@ -11,7 +11,6 @@ import (
 
 var cleanDatabase = true
 
-
 func bootServer(port uint16) {
 	if port <= 1024 {
 		log.Fatal("port is too small")
@@ -19,6 +18,7 @@ func bootServer(port uint16) {
 	for key, value := range HandlersMap() {
 		http.HandleFunc(key, value.ToHandler())
 	}
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("frontend/dist/assets"))))
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	log.Println("Server Open")
 	if errors.Is(err, http.ErrServerClosed) {
