@@ -1,11 +1,8 @@
-package main
+package Helpers
 
 import (
-	"database/sql"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 )
 
 type error_struct struct {
@@ -31,25 +28,6 @@ func ServerRuntimeError(text string, err error) {
 	panic(out)
 }
 
-func ErrorCatcher(w http.ResponseWriter) {
-	if r := recover(); r != nil {
-		err := r.(error)
-		outmsg := structToJSON(OutputJSON{Success: false, Message: err.Error()})
-		log.Printf("Error: %s", err.Error())
-		showUserTable()
-		io.WriteString(w, outmsg)
-	}
-}
-
-func CleanCloser(db *sql.DB) {
-	if r := recover(); r != nil {
-		err := r.(error)
-		closeDatabase(db)
-		panic(err)
-	}
-	closeDatabase(db)
-}
-
 type AcceptableMethods struct {
 	Get    bool
 	Post   bool
@@ -58,6 +36,7 @@ type AcceptableMethods struct {
 }
 
 func CheckMethod(method string, acceptable AcceptableMethods) {
+	log.Printf("Checking method %s", method)
 	switch method {
 	case "GET":
 		if acceptable.Get {

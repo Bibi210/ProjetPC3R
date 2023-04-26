@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Backend/Database"
 	"errors"
 	"fmt"
 	"log"
@@ -18,7 +19,7 @@ func bootServer(port uint16) {
 	for key, value := range HandlersMap() {
 		http.HandleFunc(key, value.ToHandler())
 	}
-	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("frontend/dist/assets"))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("../frontend/dist/assets"))))
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	log.Println("Server Open")
 	if errors.Is(err, http.ErrServerClosed) {
@@ -30,19 +31,17 @@ func bootServer(port uint16) {
 }
 
 func shutdownListener() {
-	log.Println("Shutdown Listener")
-	// Catch SIGINT to shutdownDatabase()
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
 	log.Println("Server Shutdown")
-	shutdownDatabase(cleanDatabase)
+	Database.ShutdownDatabase(cleanDatabase)
 	os.Exit(0)
 }
 
 func main() {
-	createDatabase()
+	Database.CreateDatabase()
 	go shutdownListener()
+	Database.ShowDatabase()
 	bootServer(25565)
-	shutdownDatabase(cleanDatabase)
 }
