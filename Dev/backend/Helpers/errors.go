@@ -2,7 +2,9 @@ package Helpers
 
 import (
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 )
 
 type error_struct struct {
@@ -56,4 +58,13 @@ func CheckMethod(method string, acceptable AcceptableMethods) {
 		}
 	}
 	OnlyServerError(fmt.Sprintf("Method %s is not supported. Accepted %#v\n", method, acceptable))
+}
+
+func ErrorCatcher(w http.ResponseWriter) {
+	if r := recover(); r != nil {
+		err := r.(error)
+		outmsg := StructToJSON(OutputJSON{Success: false, Message: err.Error()})
+		log.Printf("Error: %s", err.Error())
+		io.WriteString(w, outmsg)
+	}
 }

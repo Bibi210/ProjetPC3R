@@ -62,18 +62,9 @@ type BasicService struct {
 	methods Helpers.AcceptableMethods
 }
 
-func ErrorCatcher(w http.ResponseWriter) {
-	if r := recover(); r != nil {
-		err := r.(error)
-		outmsg := Helpers.StructToJSON(Helpers.OutputJSON{Success: false, Message: err.Error()})
-		log.Printf("Error: %s", err.Error())
-		io.WriteString(w, outmsg)
-	}
-}
-
 func (h BasicService) ToHandler() httpValidHandler {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer ErrorCatcher(w)
+		defer Helpers.ErrorCatcher(w)
 		log.Printf("Request: %s %s", r.Method, r.URL.Path)
 		Helpers.CheckMethod(r.Method, h.methods)
 		w.Header().Set("Content-Type", "application/json")
@@ -199,6 +190,13 @@ func GetSavedPost(db *sql.DB, input service_input) service_output {
 	return service_output{msg: result}
 }
 
+func GetSavedPosts(db *sql.DB, input service_input) service_output {
+	var shitpostLs Helpers.RequestOnShitPostListJSON
+	getClientRequest(input, &shitpostLs)
+	result := Helpers.OutputJSON{Success: true, Message: "Shitpost List", Result: Database.GetShitPostListAsJSON(db, shitpostLs.ShitPostIds)}
+	return service_output{msg: result}
+}
+
 func PostComment(name username, db *sql.DB, input service_input) service_output {
 	var comment Helpers.RequestSendCommentJSON
 	getClientRequest(input, &comment)
@@ -210,6 +208,13 @@ func GetSingleComment(db *sql.DB, input service_input) service_output {
 	var comment Helpers.RequestOnCommentJSON
 	getClientRequest(input, &comment)
 	result := Helpers.OutputJSON{Success: true, Message: "Comment", Result: Database.GetCommentAsJSON(db, comment.CommentId)}
+	return service_output{msg: result}
+}
+
+func GetComments(db *sql.DB, input service_input) service_output {
+	var CommentLs Helpers.RequestOnCommentListJSON
+	getClientRequest(input, &CommentLs)
+	result := Helpers.OutputJSON{Success: true, Message: "Retrived Comments", Result: Database.GetCommentListAsJSON(db, CommentLs.CommentIds)}
 	return service_output{msg: result}
 }
 
@@ -265,6 +270,8 @@ func HandlersMap() map[string]Service {
 	handlers["/api/post_comment_vote"] = AuthServiceHandle{PostCommentVote, Helpers.AcceptableMethods{Post: true}}
 	handlers["/api/post_shitpost_vote"] = AuthServiceHandle{PostShitPostVote, Helpers.AcceptableMethods{Post: true}}
 	handlers["/api/search"] = DataBasedService{Search, Helpers.AcceptableMethods{Put: true}}
+	handlers["/api/get_comment_list"] = DataBasedService{GetComments, Helpers.AcceptableMethods{Put: true}}
+	handlers["/api/get_saved_shitpost_list"] = DataBasedService{GetSavedPosts, Helpers.AcceptableMethods{Put: true}}
 
 	frontend := FrontHandler{Helpers.AcceptableMethods{Get: true}}
 	handlers["/login"] = frontend

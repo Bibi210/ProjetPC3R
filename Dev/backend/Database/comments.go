@@ -60,6 +60,14 @@ func GetCommentAsJSON(c *sql.DB, comID int) Helpers.ResponseCommentJSON {
 	return Helpers.ResponseCommentJSON{Msg: GetMsgAsJSON(c, com.msg.msgID), Upvotes: GetCommentVotesTotal(c, comID)}
 }
 
+func GetCommentListAsJSON(c *sql.DB, comIDs []int) []Helpers.ResponseCommentJSON {
+	var out []Helpers.ResponseCommentJSON
+	for _, comID := range comIDs {
+		out = append(out, GetCommentAsJSON(c, comID))
+	}
+	return out
+}
+
 func showCommentTable(c *sql.DB) {
 	fmt.Println("Comments Table :")
 	rows := query(c, "SELECT * FROM Comments")

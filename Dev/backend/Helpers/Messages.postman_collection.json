@@ -1,0 +1,560 @@
+{
+	"info": {
+		"_postman_id": "e6ea53ee-e082-4fa6-a845-dc83c451e031",
+		"name": "Messages",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "26693508"
+	},
+	"item": [
+		{
+			"name": "Create BIBI",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"login\" : \"Bibi\",\n    \"mdp\" : \"mdpBIBI\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/create_account",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"create_account"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create JOJO",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"login\" : \"JOJO\",\n    \"mdp\" : \"mdpBIBI\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/create_account",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"create_account"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "BibiLogin",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"login\" : \"Bibi\",\n    \"mdp\" : \"mdpBIBI\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/login",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "JOJOILogin",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"login\" : \"JOJO\",\n    \"mdp\" : \"mdpBIBI\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/login",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SaveShitPost",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"Url\": \"https://thedailyshitpost.net/shits/scoundrel.mp4\",\n    \"Caption\" :\"ShitPostYeah\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/save_shitpost",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"save_shitpost"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PostComment",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"ShitPostId\": 1,\n\t\"Content\": \"Je suis in commentaire\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/post_comment",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"post_comment"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UpVoteComment",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"CommentId\": 1,\n    \"Value\" : 1\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/post_comment_vote",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"post_comment_vote"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UpVote Post",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"ShitPostId\": 1,\n    \"Value\" : 1\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/post_shitpost_vote",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"post_shitpost_vote"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetProfilePublic JOJO",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\" : \"JOJO\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/get_public_profile",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"get_public_profile"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetProfilePublic BIBI",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\" : \"Bibi\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/get_public_profile",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"get_public_profile"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetRandomShitPost",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{Path}}/random_shitpost",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"random_shitpost"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetComment",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"CommentId\": 1\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/get_comment",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"get_comment"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetCommentList",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"CommentIds\": [\n        1,\n        2\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/get_comment_list",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"get_comment_list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetSearch",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"Query\": \"i\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/search",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetSavedPost",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"ShitPostId\": 1\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/get_saved_shitpost",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"get_saved_shitpost"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetSavedPostList",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"ShitPostIds\": [\n        1,\n        2\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/get_saved_shitpost_list",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"get_saved_shitpost_list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Logout",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{Path}}/logout",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"logout"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "BibiLoginAgain",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"login\" : \"Bibi\",\n    \"mdp\" : \"mdpBIBI\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Path}}/login",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete BIBI",
+			"protocolProfileBehavior": {
+				"followOriginalHttpMethod": true
+			},
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{Path}}/delete_account",
+					"host": [
+						"{{Path}}"
+					],
+					"path": [
+						"delete_account"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "Path",
+			"value": "http://localhost:25565/api/"
+		}
+	]
+}

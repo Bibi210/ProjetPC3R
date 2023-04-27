@@ -90,6 +90,14 @@ func GetShitPostAsJSON(c *sql.DB, shitpostID int) Helpers.ResponseSavedShitPostJ
 	}
 }
 
+func GetShitPostListAsJSON(c *sql.DB, shitpostID []int) []Helpers.ResponseSavedShitPostJSON {
+	var result []Helpers.ResponseSavedShitPostJSON
+	for _, id := range shitpostID {
+		result = append(result, GetShitPostAsJSON(c, id))
+	}
+	return result
+}
+
 func GetShitPostComments(c *sql.DB, shitpostID int) []Helpers.ResponseCommentJSON {
 	ids := GetShitPostCommentsIds(c, shitpostID)
 	var result []Helpers.ResponseCommentJSON

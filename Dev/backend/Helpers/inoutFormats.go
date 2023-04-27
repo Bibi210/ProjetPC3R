@@ -81,7 +81,7 @@ type ResponseUpvoteJSON struct {
 
 type ResponseSearchJSON struct {
 	ShitPosts PostIds
-	Users	 []string
+	Users     []string
 }
 
 /* ClientMessages */
@@ -110,6 +110,14 @@ type RequestOnShitPostJSON struct {
 
 type RequestOnCommentJSON struct {
 	CommentId int
+}
+
+type RequestOnCommentListJSON struct {
+	CommentIds CommentIds
+}
+
+type RequestOnShitPostListJSON struct {
+	ShitPostIds PostIds
 }
 
 type RequestSendDmJSON struct {
