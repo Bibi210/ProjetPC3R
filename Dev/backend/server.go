@@ -42,6 +42,8 @@ func shutdownListener() {
 func main() {
 	Database.CreateDatabase()
 	go shutdownListener()
-	Database.ShowDatabase()
+	db := Database.OpenDatabase()
+	Database.ShowDatabase(db)
+	Database.CleanCloser(db)
 	bootServer(25565)
 }

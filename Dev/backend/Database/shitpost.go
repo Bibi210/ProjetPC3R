@@ -16,7 +16,6 @@ const createShitPost = `CREATE TABLE IF NOT EXISTS ShitPost (
 	Caption TEXT NOT NULL,
 	URL TEXT NOT NULL,
 	Date TEXT NOT NULL,
-	Upvotes INTEGER NOT NULL,
 	FOREIGN KEY (Poster) 
 		REFERENCES Users(UserID)
 );`
@@ -27,28 +26,23 @@ type saved_shitpost_row struct {
 	caption    string
 	url        string
 	Date       time.Time
-	upvotes    int
 }
 
 func (s *saved_shitpost_row) String() string {
-	return fmt.Sprintf("ShitPostID : %d | Poster : %d | Caption : %s | URL : %s | Date : %s | Upvotes : %d", s.shitpostID, s.poster, s.caption, s.url, Helpers.FormatTime(s.Date), s.upvotes)
+	return fmt.Sprintf("ShitPostID : %d | Poster : %d | Caption : %s | URL : %s | Date : %s", s.shitpostID, s.poster, s.caption, s.url, Helpers.FormatTime(s.Date))
 }
 
 func ReadFromRowShitPost(row *sql.Rows) saved_shitpost_row {
 	r := saved_shitpost_row{}
 	var date string
-	Helpers.ServerRuntimeError("Error While Reading Row", row.Scan(&r.shitpostID, &r.poster, &r.caption, &r.url, &date, &r.upvotes))
+	Helpers.ServerRuntimeError("Error While Reading Row", row.Scan(&r.shitpostID, &r.poster, &r.caption, &r.url, &date))
 	r.Date = Helpers.ParseTime(date)
 	return r
 }
 
-func UpvoteShitPost(c *sql.DB, post int) {
-	executeRequest(c, "UPDATE ShitPost SET Upvotes = Upvotes + 1 WHERE ShitPostID = ?", post)
-}
-
 func SaveShitPost(c *sql.DB, poster string, url string, caption string) Helpers.ResponseSavedShitPostJSON {
 	userID := GetUser(c, poster).userID
-	executeRequest(c, "INSERT INTO ShitPost (Poster, Caption, URL, Date, Upvotes) VALUES (?, ?, ?, ?, ?)", userID, caption, url, Helpers.FormatTime(time.Now()), 0)
+	executeRequest(c, "INSERT INTO ShitPost (Poster, Caption, URL, Date) VALUES (?, ?, ?, ?)", userID, caption, url, Helpers.FormatTime(time.Now()))
 	rows := query(c, "SELECT last_insert_rowid()")
 	defer rows.Close()
 	if !rows.Next() {
@@ -91,7 +85,7 @@ func GetShitPostAsJSON(c *sql.DB, shitpostID int) Helpers.ResponseSavedShitPostJ
 		Caption:    shitpost.caption,
 		Creator:    shitpost.poster,
 		Date:       Helpers.FormatTime(shitpost.Date),
-		Upvotes:    shitpost.upvotes,
+		Upvotes:    GetPostVotesTotal(c, shitpostID),
 		CommentIds: GetShitPostCommentsIds(c, shitpostID),
 	}
 }

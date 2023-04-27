@@ -37,7 +37,8 @@ func CreateDatabase() {
 	executeRequest(c, createShitPost)
 	executeRequest(c, createMsg)
 	executeRequest(c, CreateComments)
-
+	executeRequest(c, createCommentUpvotes)
+	executeRequest(c, createPostUpvotes)
 }
 
 func DeleteDatabase() {
@@ -47,15 +48,17 @@ func DeleteDatabase() {
 	executeRequest(c, "DROP TABLE ShitPost")
 	executeRequest(c, "DROP TABLE Msg")
 	executeRequest(c, "DROP TABLE Comments")
+	executeRequest(c, "DROP TABLE CommentUpvotes")
+	executeRequest(c, "DROP TABLE PostUpvotes")
 }
 
-func ShowDatabase() {
-	db := OpenDatabase()
-	defer closeDatabase(db)
+func ShowDatabase(db *sql.DB) {
 	showUserTable(db)
 	showShitPostTable(db)
 	showCommentTable(db)
 	showMsgTable(db)
+	showCommentUpvotesTable(db)
+	showPostUpvotesTable(db)
 }
 
 func ShutdownDatabase(cleanDatabase bool) {

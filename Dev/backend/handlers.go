@@ -57,7 +57,7 @@ type Service interface {
 	acceptableMethods() Helpers.AcceptableMethods
 }
 
-type basic_service struct {
+type BasicService struct {
 	service basicServiceFunc
 	methods Helpers.AcceptableMethods
 }
@@ -71,7 +71,7 @@ func ErrorCatcher(w http.ResponseWriter) {
 	}
 }
 
-func (h basic_service) ToHandler() httpValidHandler {
+func (h BasicService) ToHandler() httpValidHandler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer ErrorCatcher(w)
 		log.Printf("Request: %s %s", r.Method, r.URL.Path)
@@ -86,11 +86,10 @@ func (h basic_service) ToHandler() httpValidHandler {
 			http.SetCookie(w, &cookie)
 		}
 		io.WriteString(w, outmsg)
-		Database.ShowDatabase()
 	}
 }
 
-func (h basic_service) acceptableMethods() Helpers.AcceptableMethods {
+func (h BasicService) acceptableMethods() Helpers.AcceptableMethods {
 	return h.methods
 }
 
@@ -106,7 +105,7 @@ func (h DataBasedService) ToHandler() httpValidHandler {
 		return h.service(db, input)
 
 	}
-	return basic_service{f, h.acceptableMethods()}.ToHandler()
+	return BasicService{f, h.acceptableMethods()}.ToHandler()
 }
 
 func (h DataBasedService) acceptableMethods() Helpers.AcceptableMethods {
@@ -126,7 +125,7 @@ func (h AuthServiceHandle) ToHandler() httpValidHandler {
 			output.newTokenString =
 				extendSession(db, string(username))
 		}
-
+		Database.ShowDatabase(db)
 		return output
 	}
 	return DataBasedService{f, h.acceptableMethods()}.ToHandler()
@@ -214,6 +213,20 @@ func GetSingleComment(db *sql.DB, input service_input) service_output {
 	return service_output{msg: result}
 }
 
+func PostCommentVote(name username, db *sql.DB, input service_input) service_output {
+	var vote Helpers.RequestCommentVoteJSON
+	getClientRequest(input, &vote)
+	Database.SaveCommentUpvotes(db, string(name), vote.CommentId, vote.Value)
+	return service_output{msg: Helpers.OutputJSON{Success: true, Message: "Voted"}}
+}
+
+func PostShitPostVote(name username, db *sql.DB, input service_input) service_output {
+	var vote Helpers.RequestShitPostVoteJSON
+	getClientRequest(input, &vote)
+	Database.SavePostUpvotes(db, string(name), vote.ShitPostId, vote.Value)
+	return service_output{msg: Helpers.OutputJSON{Success: true, Message: "Voted"}}
+}
+
 type FrontHandler struct {
 	methods Helpers.AcceptableMethods
 }
@@ -236,11 +249,14 @@ func HandlersMap() map[string]Service {
 	handlers["/api/get_public_profile"] = DataBasedService{GetPublicProfile, Helpers.AcceptableMethods{Get: true}}
 	handlers["/api/logout"] = AuthServiceHandle{Logout, Helpers.AcceptableMethods{Put: true}}
 	handlers["/api/delete_account"] = AuthServiceHandle{DeleteAccount, Helpers.AcceptableMethods{Delete: true}}
-	handlers["/api/random_shitpost"] = basic_service{RandomShitPost, Helpers.AcceptableMethods{Get: true}}
+	handlers["/api/random_shitpost"] = BasicService{RandomShitPost, Helpers.AcceptableMethods{Get: true}}
 	handlers["/api/save_shitpost"] = AuthServiceHandle{SavePost, Helpers.AcceptableMethods{Post: true}}
 	handlers["/api/get_saved_shitpost"] = DataBasedService{GetSavedPost, Helpers.AcceptableMethods{Get: true}}
 	handlers["/api/post_comment"] = AuthServiceHandle{PostComment, Helpers.AcceptableMethods{Post: true}}
 	handlers["/api/get_comment"] = DataBasedService{GetSingleComment, Helpers.AcceptableMethods{Get: true}}
+	handlers["/api/post_comment_vote"] = AuthServiceHandle{PostCommentVote, Helpers.AcceptableMethods{Post: true}}
+	handlers["/api/post_shitpost_vote"] = AuthServiceHandle{PostShitPostVote, Helpers.AcceptableMethods{Post: true}}
+	
 
 	frontend := FrontHandler{Helpers.AcceptableMethods{Get: true}}
 	handlers["/login"] = frontend

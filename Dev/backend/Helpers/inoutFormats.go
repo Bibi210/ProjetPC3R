@@ -42,10 +42,12 @@ type APIRandomShitPostJSON struct {
 }
 
 type ResponseUserPublicProfileJSON struct {
-	Username string
-	Posts    PostIds
-	Comments CommentIds
-	LastSeen string
+	Username      string
+	Posts         PostIds
+	Comments      CommentIds
+	LastSeen      string
+	VotedPosts    PostIds
+	VotedComments CommentIds
 }
 
 type ResponseUserPrivateProfileJSON struct {
@@ -70,6 +72,11 @@ type ResponseMsgJSON struct {
 type ResponseCommentJSON struct {
 	Msg     ResponseMsgJSON
 	Upvotes int
+}
+
+type ResponseUpvoteJSON struct {
+	Acceptedvalue int
+	PostVotes     int
 }
 
 /* ClientMessages */
@@ -103,4 +110,14 @@ type RequestOnCommentJSON struct {
 type RequestSendDmJSON struct {
 	To      int
 	Content string
+}
+
+type RequestShitPostVoteJSON struct {
+	ShitPostId int
+	Value      int
+}
+
+type RequestCommentVoteJSON struct {
+	CommentId int
+	Value     int
 }
