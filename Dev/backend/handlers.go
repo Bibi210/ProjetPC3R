@@ -102,6 +102,7 @@ func (h DataBasedService) ToHandler() httpValidHandler {
 	f := func(input service_input) service_output {
 		db := Database.OpenDatabase()
 		defer Database.CleanCloser(db)
+		Database.ShowDatabase(db)
 		return h.service(db, input)
 
 	}
@@ -125,7 +126,6 @@ func (h AuthServiceHandle) ToHandler() httpValidHandler {
 			output.newTokenString =
 				extendSession(db, string(username))
 		}
-		Database.ShowDatabase(db)
 		return output
 	}
 	return DataBasedService{f, h.acceptableMethods()}.ToHandler()
@@ -227,6 +227,14 @@ func PostShitPostVote(name username, db *sql.DB, input service_input) service_ou
 	return service_output{msg: Helpers.OutputJSON{Success: true, Message: "Voted"}}
 }
 
+func Search(db *sql.DB, input service_input) service_output {
+	var search Helpers.RequestSearchJSON
+	getClientRequest(input, &search)
+	output := Helpers.ResponseSearchJSON{ShitPosts: Database.SearchShitPost(db, search.Query), Users: Database.SearchUser(db, search.Query)}
+	result := Helpers.OutputJSON{Success: true, Message: "Search", Result: output}
+	return service_output{msg: result}
+}
+
 type FrontHandler struct {
 	methods Helpers.AcceptableMethods
 }
@@ -256,7 +264,7 @@ func HandlersMap() map[string]Service {
 	handlers["/api/get_comment"] = DataBasedService{GetSingleComment, Helpers.AcceptableMethods{Get: true}}
 	handlers["/api/post_comment_vote"] = AuthServiceHandle{PostCommentVote, Helpers.AcceptableMethods{Post: true}}
 	handlers["/api/post_shitpost_vote"] = AuthServiceHandle{PostShitPostVote, Helpers.AcceptableMethods{Post: true}}
-	
+	handlers["/api/search"] = DataBasedService{Search, Helpers.AcceptableMethods{Get: true}}
 
 	frontend := FrontHandler{Helpers.AcceptableMethods{Get: true}}
 	handlers["/login"] = frontend

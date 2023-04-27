@@ -42,6 +42,9 @@ func ReadFromRowCommentUpvotes(row *sql.Rows) saved_commentupvotes_row {
 
 func SaveCommentUpvotes(c *sql.DB, upvoter string, commentID int, vote int) Helpers.ResponseUpvoteJSON {
 	upvoterID := GetUser(c, upvoter).userID
+	if vote != 1 && vote != -1 {
+		Helpers.OnlyServerError("Invalid Vote Value")
+	}
 	rows, err := c.Query("SELECT Vote FROM CommentUpvotes WHERE Upvoter = ? AND Comment = ?", upvoterID, commentID)
 	Helpers.ServerRuntimeError("Error While Querying CommentUpvotes", err)
 	defer rows.Close()

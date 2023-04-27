@@ -79,6 +79,11 @@ type ResponseUpvoteJSON struct {
 	PostVotes     int
 }
 
+type ResponseSearchJSON struct {
+	ShitPosts PostIds
+	Users	 []string
+}
+
 /* ClientMessages */
 type RequestAuthJSON struct {
 	Login string
@@ -120,4 +125,8 @@ type RequestShitPostVoteJSON struct {
 type RequestCommentVoteJSON struct {
 	CommentId int
 	Value     int
+}
+
+type RequestSearchJSON struct {
+	Query string
 }

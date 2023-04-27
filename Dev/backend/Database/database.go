@@ -30,6 +30,7 @@ func query(c *sql.DB, query string, args ...interface{}) *sql.Rows {
 	return rows
 }
 
+
 func CreateDatabase() {
 	c := OpenDatabase()
 	defer closeDatabase(c)

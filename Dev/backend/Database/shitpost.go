@@ -111,6 +111,19 @@ func GetAllShitPostsID(c *sql.DB) []int {
 	return result
 }
 
+func SearchShitPost(c *sql.DB, input string) []int {
+	input = "%" + input + "%"
+	rows := query(c, "SELECT ShitPostID FROM ShitPost WHERE Caption LIKE ? OR URL LIKE ?", input, input)
+	defer rows.Close()
+	var result []int
+	for rows.Next() {
+		var shitpostID int
+		Helpers.ServerRuntimeError("Error While Reading Row", rows.Scan(&shitpostID))
+		result = append(result, shitpostID)
+	}
+	return result
+}
+
 func showShitPostTable(c *sql.DB) {
 	fmt.Println("ShitPost Table : ")
 	rows := query(c, "SELECT * FROM ShitPost")

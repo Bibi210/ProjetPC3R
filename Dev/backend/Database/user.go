@@ -143,6 +143,16 @@ func GetAllUsersAsJSON(c *sql.DB) []Helpers.ResponseUserPublicProfileJSON {
 	return users
 }
 
+func SearchUser(c *sql.DB, username string) []string {
+	rows := query(c, "SELECT * FROM Users WHERE Username LIKE ?", "%"+username+"%")
+	defer rows.Close()
+	var users []string
+	for rows.Next() {
+		users = append(users, ReadFromRowUser(rows).username)
+	}
+	return users
+}
+
 func showUserTable(db *sql.DB) {
 	fmt.Println("Users Table :")
 	rows := query(db, "SELECT * FROM Users")
