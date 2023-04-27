@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-cd frontend || exit
+cd Dev/frontend || exit
 if [ ! -d "node_modules" ]; then # folder does not exist
     printf "\n\e[32m###############\e[34m npm install \e[32m###############\e[0m\n\n"
     npm install
