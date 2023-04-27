@@ -1,7 +1,7 @@
-import {Button, CircularProgress, Container, TextField, Typography} from "@mui/material"
+import { Button, CircularProgress, Container, TextField, Typography } from "@mui/material"
 import "../styles/Login.css"
-import {useState} from "react"
-import {Navigate} from "react-router-dom";
+import { useState } from "react"
+import { Navigate } from "react-router-dom";
 
 async function request(email: string, password: string, action: string) {
     console.log(email, password)
@@ -17,7 +17,7 @@ async function request(email: string, password: string, action: string) {
     return json
 }
 
-enum NotificationType {ERROR, NOTIF}
+enum NotificationType { ERROR, NOTIF }
 type Notification = {
     msg: string,
     type: NotificationType
@@ -43,11 +43,11 @@ function Login() {
 
     function validateBeforeRequest(email: string, pass: string, action: string) {
         if (email == "") {
-            addNotif({msg:"please add an email", type: NotificationType.ERROR})
+            addNotif({ msg: "please add an email", type: NotificationType.ERROR })
             return
         }
         if (pass == "") {
-            addNotif({msg:"please add a password", type: NotificationType.ERROR})
+            addNotif({ msg: "please add a password", type: NotificationType.ERROR })
             return
         }
         if (!createAccountMode) {
@@ -57,36 +57,36 @@ function Login() {
                 if (res.Success) {
                     setLoggedIn(true)
                 } else {
-                    addNotif({msg: res.Message, type: NotificationType.ERROR})
+                    addNotif({ msg: res.Message, type: NotificationType.ERROR })
                 }
             })
             return request(email, pass, action)
         }
         if (password2 != password) {
-            addNotif({msg:"passwords don't match", type: NotificationType.ERROR})
+            addNotif({ msg: "passwords don't match", type: NotificationType.ERROR })
             return
         }
         setSendingRequest(true)
         request(email, pass, action).then(res => {
             setSendingRequest(false)
             if (res.Success) {
-                addNotif({msg:"account successfully created", type: NotificationType.NOTIF})
+                addNotif({ msg: "account successfully created", type: NotificationType.NOTIF })
                 setCreateAccountMode(false)
             } else {
-                addNotif({msg: res.Message, type: NotificationType.ERROR})
+                addNotif({ msg: res.Message, type: NotificationType.ERROR })
             }
         })
     }
 
     return <Container className="main-container">
-        {loggedIn && <Navigate to="/"/>}
+        {loggedIn && <Navigate to="/" />}
         <Typography variant="h2"> {createAccountMode ? "Create an account" : "Login"} </Typography>
         <div className="errors">
             {notifications.map((error) =>
                 <Button
                     fullWidth
                     variant="contained"
-                    style={{backgroundColor: error.type == NotificationType.ERROR ? "#EF5350": "#3F51B5"}}
+                    style={{ backgroundColor: error.type == NotificationType.ERROR ? "#EF5350" : "#3F51B5" }}
                 >{error.msg}</Button>)
             }
         </div>
@@ -96,7 +96,7 @@ function Login() {
                 variant="filled"
                 error={email == ""}
                 helperText={email == "" ? "email cannot be empty" : ""}
-                onChange={(e) => setEmail(e.currentTarget.value)}/>
+                onChange={(e) => setEmail(e.currentTarget.value)} />
             <TextField
                 label="password"
                 type="password"
@@ -119,10 +119,10 @@ function Login() {
             className="login-btn"
             variant="contained"
             onClick={() => validateBeforeRequest(email, password, createAccountMode ? "create_account" : "login")}
-        >{sendingRequest ? <CircularProgress/> : createAccountMode ? "Create account" : "Login"}</Button>
+        >{sendingRequest ? <CircularProgress /> : createAccountMode ? "Create account" : "Login"}</Button>
         <Button
             className="sign-up-btn"
-            style={{textTransform: 'none'}}
+            style={{ textTransform: 'none' }}
             onClick={() => setCreateAccountMode(!createAccountMode)}
         >
             {createAccountMode ? "Already have an account? Login" : "Create a new account"}

@@ -254,14 +254,14 @@ func HandlersMap() map[string]Service {
 	handlers["/api/login"] = DataBasedService{LoginWithRemember, Helpers.AcceptableMethods{Put: true}}
 	handlers["/api/create_account"] = DataBasedService{CreateAccount, Helpers.AcceptableMethods{Post: true}}
 	handlers["/api/get_private_profile"] = AuthServiceHandle{GetPrivateProfile, Helpers.AcceptableMethods{Get: true}}
-	handlers["/api/get_public_profile"] = DataBasedService{GetPublicProfile, Helpers.AcceptableMethods{Get: true}}
+	handlers["/api/get_public_profile"] = DataBasedService{GetPublicProfile, Helpers.AcceptableMethods{Put: true}}
 	handlers["/api/logout"] = AuthServiceHandle{Logout, Helpers.AcceptableMethods{Put: true}}
 	handlers["/api/delete_account"] = AuthServiceHandle{DeleteAccount, Helpers.AcceptableMethods{Delete: true}}
 	handlers["/api/random_shitpost"] = BasicService{RandomShitPost, Helpers.AcceptableMethods{Get: true}}
 	handlers["/api/save_shitpost"] = AuthServiceHandle{SavePost, Helpers.AcceptableMethods{Post: true}}
-	handlers["/api/get_saved_shitpost"] = DataBasedService{GetSavedPost, Helpers.AcceptableMethods{Get: true}}
+	handlers["/api/get_saved_shitpost"] = DataBasedService{GetSavedPost, Helpers.AcceptableMethods{Put: true}}
 	handlers["/api/post_comment"] = AuthServiceHandle{PostComment, Helpers.AcceptableMethods{Post: true}}
-	handlers["/api/get_comment"] = DataBasedService{GetSingleComment, Helpers.AcceptableMethods{Get: true}}
+	handlers["/api/get_comment"] = DataBasedService{GetSingleComment, Helpers.AcceptableMethods{Put: true}}
 	handlers["/api/post_comment_vote"] = AuthServiceHandle{PostCommentVote, Helpers.AcceptableMethods{Post: true}}
 	handlers["/api/post_shitpost_vote"] = AuthServiceHandle{PostShitPostVote, Helpers.AcceptableMethods{Post: true}}
 	handlers["/api/search"] = DataBasedService{Search, Helpers.AcceptableMethods{Get: true}}

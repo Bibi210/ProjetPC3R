@@ -1,8 +1,9 @@
-import React, {useEffect, useState} from 'react'
+import React, { useEffect, useState } from 'react'
 import '../styles/Root.css'
-import {AppBar, Box, Tab, Tabs, Typography} from '@mui/material'
+import { AppBar, Box, Tab, Tabs, Typography } from '@mui/material'
 import Post from "../components/Post";
 import Profile from "../components/Profile";
+import { useNavigate } from 'react-router-dom';
 
 
 async function callServerRandomShitPost() {
@@ -10,28 +11,45 @@ async function callServerRandomShitPost() {
     return await res.json()
 }
 
-function Base() {
+const tabValue = {
+    top_posts: 0,
+    random_posts: 1,
+    search: 2,
+    conversations: 3,
+    profile: 4
+}
+
+function Base({ tab }: { tab: "top_posts" | "random_posts" | "search" | "profile" }) {
+    let navigate = useNavigate()
+
     let [loading, setLoading] = useState(true)
     let [response, setResponse] = useState<any>({})
 
-    let [tab, setTab] = React.useState(0);
+    let [tabIndex, setTabIndex] = React.useState(tabValue[tab]);
     let [refreshPost, setRefreshPost] = useState(true);
 
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-        setRefreshPost(true)
-        setTab(newValue);
+    const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
+        if (newValue == 0 || newValue == 1) {
+            setRefreshPost(true)
+        }
+        let linksToNavigate = ["/top", "/", "/search", "/profile"]
+        navigate(linksToNavigate[newValue])
+
+        setTabIndex(newValue);
     };
 
     useEffect(() => {
+        console.log(refreshPost);
+
         if (refreshPost) {
-            if (tab == 0) {         // top
+            if (tabIndex == 0) {         // top
                 setLoading(true)
                 callServerRandomShitPost().then(res => {
                     setResponse(res)
                     setLoading(false)
                     setRefreshPost(false)
                 })
-            } else if (tab == 1) {  // random
+            } else if (tabIndex == 1) {  // random
                 setLoading(true)
                 callServerRandomShitPost().then(res => {
                     setResponse(res)
@@ -44,35 +62,31 @@ function Base() {
 
     return (
         <>
-            <AppBar position="static">
+            <AppBar position="sticky">
                 <Tabs
-                    value={tab}
+                    value={tabIndex}
                     onChange={handleTabChange}
                     indicatorColor="secondary"
                     textColor="inherit"
                     variant="fullWidth"
                 >
-                    <Tab label="Top Posts"/>
-                    <Tab label="Random Posts"/>
-                    <Tab label="Search"/>
-                    <Tab label="Conversations"/>
-                    <Tab label="Profile"/>
+                    <Tab label="Top Posts" />
+                    <Tab label="Random Posts" />
+                    <Tab label="Search" />
+                    <Tab label="Profile" />
                 </Tabs>
             </AppBar>
-            <TabPanel value={tab} index={0}>
-                <Post loading={loading} src={response.Result} setRefresh={setRefreshPost}/>
+            <TabPanel value={tabIndex} index={0}>
+                <Post loading={loading} caption="" src={response.Result} setRefresh={setRefreshPost} controls={true} />
             </TabPanel>
-            <TabPanel value={tab} index={1}>
-                <Post loading={loading} src={response.Result} setRefresh={setRefreshPost}/>
+            <TabPanel value={tabIndex} index={1}>
+                <Post loading={loading} caption="" src={response.Result} setRefresh={setRefreshPost} controls={true} />
             </TabPanel>
-            <TabPanel value={tab} index={2}>
+            <TabPanel value={tabIndex} index={2}>
                 Search
             </TabPanel>
-            <TabPanel value={tab} index={3}>
-                Conversations
-            </TabPanel>
-            <TabPanel value={tab} index={4}>
-                <Profile/>
+            <TabPanel value={tabIndex} index={3}>
+                <Profile />
             </TabPanel>
         </>
     )
@@ -85,7 +99,7 @@ interface TabPanelProps {
 }
 
 function TabPanel(props: TabPanelProps) {
-    const {children, value, index, ...other} = props;
+    const { children, value, index, ...other } = props;
 
     return (
         <div
@@ -96,7 +110,7 @@ function TabPanel(props: TabPanelProps) {
             {...other}
         >
             {value === index && (
-                <Box sx={{p: 3}}>
+                <Box sx={{ p: 3 }}>
                     <Typography>{children}</Typography>
                 </Box>
             )}

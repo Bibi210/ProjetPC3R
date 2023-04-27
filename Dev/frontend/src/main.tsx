@@ -1,19 +1,21 @@
-import React from 'react'
 import ReactDOM from 'react-dom/client'
 import {
     createBrowserRouter,
     RouterProvider
 } from 'react-router-dom'
 import Base from './views/Base'
-import Login from './components/Login'
+import Login from './views/Login'
 import Profile from "./components/Profile";
-import Logout from "./components/Logout";
+import Logout from "./views/Logout";
 
 const router = createBrowserRouter([
-    {path: "/", element: <Base/>},
+    {path: "/", element: <Base tab="random_posts"/>},
+    {path: "/top", element: <Base tab="top_posts"/>},
+    {path: "/random", element: <Base tab="random_posts"/>},
+    {path: "/search", element: <Base tab="search"/>},
+    {path: "/profile", element: <Base tab="profile"/>},
     {path: "/login", element: <Login/>},
     {path: "/logout", element: <Logout/>},
-    {path: "/profile", element: <Profile/>},
 ])
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
