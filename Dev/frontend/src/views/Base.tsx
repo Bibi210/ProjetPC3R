@@ -15,8 +15,7 @@ const tabValue = {
     top_posts: 0,
     random_posts: 1,
     search: 2,
-    conversations: 3,
-    profile: 4
+    profile: 3
 }
 
 function Base({ tab }: { tab: "top_posts" | "random_posts" | "search" | "profile" }) {
@@ -39,8 +38,6 @@ function Base({ tab }: { tab: "top_posts" | "random_posts" | "search" | "profile
     };
 
     useEffect(() => {
-        console.log(refreshPost);
-
         if (refreshPost) {
             if (tabIndex == 0) {         // top
                 setLoading(true)
