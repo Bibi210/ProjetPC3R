@@ -1,5 +1,5 @@
 function Comments() {
-    return <>Comments</>
+  return <>Comments</>
 }
 
 export default Comments
