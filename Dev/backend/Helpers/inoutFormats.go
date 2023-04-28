@@ -139,6 +139,6 @@ type RequestSearchJSON struct {
 	Query string
 }
 
-type RequestTopUsersJSON struct {
+type RequestTopJSON struct {
 	Count int
 }

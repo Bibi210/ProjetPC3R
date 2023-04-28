@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"sort"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -130,6 +131,18 @@ func SearchShitPost(c *sql.DB, input string) []int {
 		result = append(result, shitpostID)
 	}
 	return result
+}
+
+func GetTopPostsIDs(c *sql.DB, limit int) []int {
+	ids := GetAllShitPostsID(c)
+	sort.Slice(ids, func(i, j int) bool {
+		return GetPostVotesTotal(c, ids[i]) > GetPostVotesTotal(c, ids[j])
+	},
+	)
+	if len(ids) < limit {
+		return ids
+	}
+	return ids[:limit]
 }
 
 func showShitPostTable(c *sql.DB) {

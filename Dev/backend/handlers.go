@@ -241,9 +241,16 @@ func Search(db *sql.DB, input service_input) service_output {
 }
 
 func GetTopUsers(db *sql.DB, input service_input) service_output {
-	var top Helpers.RequestTopUsersJSON
+	var top Helpers.RequestTopJSON
 	getClientRequest(input, &top)
 	result := Helpers.OutputJSON{Success: true, Message: "Top Users", Result: Database.GetTopUsersIDS(db, top.Count)}
+	return service_output{msg: result}
+}
+
+func GetTopShitPosts(db *sql.DB, input service_input) service_output {
+	var top Helpers.RequestTopJSON
+	getClientRequest(input, &top)
+	result := Helpers.OutputJSON{Success: true, Message: "Top ShitPosts", Result: Database.GetTopPostsIDs(db, top.Count)}
 	return service_output{msg: result}
 }
 
@@ -280,13 +287,10 @@ func HandlersMap() map[string]Service {
 	handlers["/api/get_comment_list"] = DataBasedService{GetComments, Helpers.AcceptableMethods{Put: true}}
 	handlers["/api/get_saved_shitpost_list"] = DataBasedService{GetSavedPosts, Helpers.AcceptableMethods{Put: true}}
 	handlers["/api/get_top_users"] = DataBasedService{GetTopUsers, Helpers.AcceptableMethods{Put: true}}
+	handlers["/api/get_top_shitposts"] = DataBasedService{GetTopShitPosts, Helpers.AcceptableMethods{Put: true}}
 
 	frontend := FrontHandler{Helpers.AcceptableMethods{Get: true}}
-	handlers["/login"] = frontend
-	handlers["/create_account"] = frontend
-	handlers["/profile"] = frontend
-	handlers["/logout"] = frontend
-	handlers["/delete_account"] = frontend
+
 	handlers["/"] = frontend
 	return handlers
 }

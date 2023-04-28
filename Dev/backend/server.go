@@ -2,7 +2,7 @@ package main
 
 import (
 	"Backend/Database"
-	"errors"
+	"Backend/Helpers"
 	"fmt"
 	"log"
 	"net/http"
@@ -20,14 +20,8 @@ func bootServer(port uint16) {
 		http.HandleFunc(key, value.ToHandler())
 	}
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("../frontend/dist/assets"))))
-	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
-	log.Println("Server Open")
-	if errors.Is(err, http.ErrServerClosed) {
-		log.Printf("Server Closed\n")
-	} else if err != nil {
-		log.Printf("Error while starting server: %s\n", err)
-		os.Exit(1)
-	}
+	log.Printf("Server Open on http://localhost:%d\n", port)
+	Helpers.ServerRuntimeError("Can't open server",http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
 func shutdownListener() {
