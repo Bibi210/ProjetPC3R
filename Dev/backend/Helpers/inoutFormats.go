@@ -30,7 +30,6 @@ type APIRandomShitPostJSON struct { /* Réponse de l'API externe */
 	Url   string
 }
 
-
 type PostIds []int
 type CommentIds []int
 
@@ -57,7 +56,7 @@ type ResponseUserPrivateProfileJSON struct {
 type ResponseSavedShitPostJSON struct {
 	Url        string
 	Caption    string
-	Creator    int
+	Creator    string
 	Date       string
 	Upvotes    int
 	CommentIds CommentIds
@@ -85,6 +84,7 @@ type ResponseSearchJSON struct {
 }
 
 /* ClientMessages */
+
 type RequestAuthJSON struct {
 	Login string
 	Mdp   string

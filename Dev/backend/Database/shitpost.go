@@ -81,10 +81,11 @@ func GetShitPostCommentsIds(c *sql.DB, shitpostID int) []int {
 
 func GetShitPostAsJSON(c *sql.DB, shitpostID int) Helpers.ResponseSavedShitPostJSON {
 	shitpost := GetShitPost(c, shitpostID)
+	poster := GetUserByID(c, shitpost.poster)
 	return Helpers.ResponseSavedShitPostJSON{
 		Url:        shitpost.url,
 		Caption:    shitpost.caption,
-		Creator:    shitpost.poster,
+		Creator:    poster.username,
 		Date:       Helpers.FormatTime(shitpost.Date),
 		Upvotes:    GetPostVotesTotal(c, shitpostID),
 		CommentIds: GetShitPostCommentsIds(c, shitpostID),
