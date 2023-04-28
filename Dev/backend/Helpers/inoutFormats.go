@@ -25,6 +25,12 @@ func FormatTime(t time.Time) string {
 	return t.Format(time.ANSIC)
 }
 
+type APIRandomShitPostJSON struct { /* Réponse de l'API externe */
+	Error string
+	Url   string
+}
+
+
 type PostIds []int
 type CommentIds []int
 
@@ -35,12 +41,6 @@ type OutputJSON struct {
 	Message string
 	Result  any
 }
-
-type APIRandomShitPostJSON struct {
-	Error string
-	Url   string
-}
-
 type ResponseUserPublicProfileJSON struct {
 	Username      string
 	Posts         PostIds
