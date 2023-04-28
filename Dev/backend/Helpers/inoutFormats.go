@@ -138,3 +138,7 @@ type RequestCommentVoteJSON struct {
 type RequestSearchJSON struct {
 	Query string
 }
+
+type RequestTopUsersJSON struct {
+	Count int
+}

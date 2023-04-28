@@ -240,6 +240,13 @@ func Search(db *sql.DB, input service_input) service_output {
 	return service_output{msg: result}
 }
 
+func GetTopUsers(db *sql.DB, input service_input) service_output {
+	var top Helpers.RequestTopUsersJSON
+	getClientRequest(input, &top)
+	result := Helpers.OutputJSON{Success: true, Message: "Top Users", Result: Database.GetTopUsersIDS(db, top.Count)}
+	return service_output{msg: result}
+}
+
 type FrontHandler struct {
 	methods Helpers.AcceptableMethods
 }
@@ -272,6 +279,7 @@ func HandlersMap() map[string]Service {
 	handlers["/api/search"] = DataBasedService{Search, Helpers.AcceptableMethods{Put: true}}
 	handlers["/api/get_comment_list"] = DataBasedService{GetComments, Helpers.AcceptableMethods{Put: true}}
 	handlers["/api/get_saved_shitpost_list"] = DataBasedService{GetSavedPosts, Helpers.AcceptableMethods{Put: true}}
+	handlers["/api/get_top_users"] = DataBasedService{GetTopUsers, Helpers.AcceptableMethods{Put: true}}
 
 	frontend := FrontHandler{Helpers.AcceptableMethods{Get: true}}
 	handlers["/login"] = frontend

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
+	"sort"
 	"time"
 )
 
@@ -71,6 +72,15 @@ func GetUser(c *sql.DB, username string) user_row {
 	return ReadFromRowUser(rows)
 }
 
+func GetUserByID(c *sql.DB, id int) user_row {
+	rows := query(c, "SELECT * FROM Users WHERE UserID = ?", id)
+	defer rows.Close()
+	if !rows.Next() {
+		Helpers.OnlyServerError("User don't exist")
+	}
+	return ReadFromRowUser(rows)
+}
+
 func IsUserExist(c *sql.DB, username string) bool {
 	rows := query(c, "SELECT * FROM Users WHERE Username = ?", username)
 	defer rows.Close()
@@ -85,6 +95,29 @@ func GetUserShitPostsIDS(c *sql.DB, username string) []int {
 		var id int
 		Helpers.ServerRuntimeError("Error While Reading Row", rows.Scan(&id))
 		ids = append(ids, id)
+	}
+	return ids
+}
+
+func GetUserScore(c *sql.DB, id int) int {
+	user := GetUserByID(c, id).Private(c)
+	totalVotes := 0
+	for _, post := range user.Posts {
+		totalVotes += GetPostVotesTotal(c, post)
+	}
+	for _, comment := range user.Comments {
+		totalVotes += GetCommentVotesTotal(c, comment)
+	}
+	return totalVotes
+}
+
+func GetTopUsersIDS(c *sql.DB, limit int) []int {
+	ids := GetAllUsersIDS(c)
+	sort.Slice(ids, func(i, j int) bool {
+		return GetUserScore(c, ids[i]) > GetUserScore(c, ids[j])
+	})
+	if len(ids) > limit {
+		return ids[:limit]
 	}
 	return ids
 }
