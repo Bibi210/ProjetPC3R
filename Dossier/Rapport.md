@@ -40,6 +40,10 @@ tableofcontents: true # Table des matières
 ## L'API Externe
 
 L'API externe utilisée est celle de [thedailyshitpost.net](https://thedailyshitpost.net/api) cette API REST permet l'accés a un collection catalogue de shitpost sous différents formats (GIF, Image, Vidéo, Texte, etc...) dans le cadre de notre application nous avons choisi de récupérer des images et des GIFs.
+Un appel à l'API externe a chaque demande de shitpost aléatoire nous renvoie un JSON contenant les informations du shitpost ainsi que l'URL de l'image ou du GIF.
+
+### Disclaimer
+Il est important de noter que l'API externe utilisée est une API publique et gratuite, et mise a disposition par une personne ou organisation tierce, nous ne pouvons donc pas garantir la disponibilité de permanente de l'API ou la modération des contenus.
 
 
 ## Cas d'utilisation
@@ -78,7 +82,7 @@ En s'inspirant du cours de PAF chacun des formats de requête et de réponse est
 
 Ceci nous permet de réduire la vérification des JSON requêtes à une simple vérification du type.
 
-Pour ne pas alourdir ce rapport, nous n'allons pas détailler la mise en œuvre en détail de chaque JSON mais nous vous invitons à consulter le code source du backend.
+Pour ne pas alourdir ce rapport, nous n'allons pas détailler la mise en œuvre de chaque JSON mais nous vous invitons à consulter le code source du backend.
 
 #### Les requêtes
 sont envoyées au format JSON et dependent du endpoint ciblée.
@@ -207,3 +211,10 @@ Code source du serveur écrit en GoLang.
   - `auth.go` : Manipulation et vérification des tokens JWT.
   - `handlers.go` : Handlers HTTP.
   - `server.go` : Paramétrage du serveur HTTP.
+
+# Conclusion
+
+Ce projet étant notre premier projet de développement web, nous avons eu beaucoup de difficultés à le réaliser.
+De nombreuses technologies nous étaient inconnues et nous avons dû les apprendre en parallèle des cours et des autres projets.
+Cependant, ce projet nous a permis de mobiliser de nombreuses compétences acquises au cours de notre formation notamment les cours de PAF et MLBDA et de comprendre par la pratique les concepts abordés dans ses cours.
+C'est pourquoi nous sommes satisfaits du résultat final et nous espérons que vous le serez aussi.
