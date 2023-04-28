@@ -1,9 +1,9 @@
 import { Button, Card, CardActions, CardContent, CardMedia, CircularProgress, Grid, Typography, } from "@mui/material";
 import { useState } from "react";
-import { PostProps } from "../utils/types"
+import { PostComponentProps } from "../utils/types"
 import { savePost } from "../utils/serverFunctions";
 
-function Post({ loading, caption, src, setRefresh, random: controls, comments }: PostProps) {
+function Post({ loading, caption, src, setRefresh, random, comments }: PostComponentProps) {
   const [saving, setSaving] = useState(false)
   const [saveMenu, setSaveMenu] = useState<boolean>(false)
 
@@ -43,7 +43,7 @@ function Post({ loading, caption, src, setRefresh, random: controls, comments }:
           <CardContent>
             <Typography variant="body2">{caption}</Typography>
           </CardContent>}
-        {controls && <CardActions>
+        {random && <CardActions>
           <Button
             variant="contained"
             style={{ backgroundColor: "#EC407A", color: "white" }}
@@ -87,7 +87,7 @@ function Post({ loading, caption, src, setRefresh, random: controls, comments }:
   </Grid>
 }
 
-function filetype(src: string) {
+export function filetype(src: string) {
   if (src) return src.substring(src.lastIndexOf(".") + 1)
 }
 

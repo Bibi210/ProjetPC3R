@@ -1,14 +1,18 @@
 import { Dispatch, SetStateAction } from "react"
 
-export type User = {
-  Username: string
-  Posts: number[]
-}
-
 export type ServerResponse = {
   Message: string,
   Success: boolean,
   Result: any
+}
+
+export type User = {
+  Username: string
+  LastSeen: string
+  Posts: number[]
+  Comments: number[]
+  VotedComments: number[]
+  VotedPosts: number[]
 }
 
 export type Post = {
@@ -19,7 +23,7 @@ export type Post = {
   Url: string
 }
 
-export type PostProps = {
+export type PostComponentProps = {
   loading: boolean,
   caption: string,
   src: string,
@@ -38,4 +42,9 @@ export type Notification = {
   msg: string,
   type: NotificationType,
   show: boolean
+}
+
+export type SearchResults = {
+  ShitPosts: number[],
+  Users: string[]
 }

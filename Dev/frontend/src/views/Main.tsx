@@ -4,8 +4,9 @@ import { AppBar, Box, Tab, Tabs, Typography } from '@mui/material'
 import Post from "../components/Post";
 import Profile from "../components/Profile";
 import { useNavigate } from 'react-router-dom';
-import TopPosts from './TopPosts';
+import TopPosts from '../components/TopPosts';
 import { getRandomPost } from '../utils/serverFunctions';
+import Search from "../components/Search";
 
 const tabValue = {
   top_posts: 0,
@@ -14,7 +15,7 @@ const tabValue = {
   profile: 3
 }
 
-function Base({ tab }: { tab: "top_posts" | "random_posts" | "search" | "profile" }) {
+function Main({ tab }: { tab: "top_posts" | "random_posts" | "search" | "profile" }) {
   let navigate = useNavigate()
 
   let [loading, setLoading] = useState(true)
@@ -77,7 +78,7 @@ function Base({ tab }: { tab: "top_posts" | "random_posts" | "search" | "profile
               comments={false} />
       </TabPanel>
       <TabPanel value={tabIndex} index={2}>
-        Search
+        <Search />
       </TabPanel>
       <TabPanel value={tabIndex} index={3}>
         <Profile />
@@ -112,4 +113,4 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-export default Base
+export default Main

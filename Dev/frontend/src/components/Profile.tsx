@@ -23,16 +23,19 @@ function Profile() {
 
   useEffect(() => {
     getPrivateProfile().then(userRes => {
-      let newUser: User = userRes.Result
-      setUser(newUser)
-      getPosts(newUser.Posts).then(postsRes => {
-        if (postsRes.Success) {
-          setPosts(postsRes.Result)
-        } else {
-          console.log(postsRes.Message)
-          // notifie
-        }
-      })
+      if (userRes.Success) {
+        let newUser: User = userRes.Result
+        setUser(newUser)
+        getPosts(newUser.Posts).then(postsRes => {
+          if (postsRes.Success) {
+            console.log(postsRes.Result)
+            setPosts(postsRes.Result)
+          } else {
+            console.log(postsRes.Message)
+            // notifie
+          }
+        })
+      }
       setLoading(false)
     })
   }, [])
@@ -83,7 +86,7 @@ function Profile() {
   </Container>
 }
 
-function initials(name: string): string {
+export function initials(name: string): string {
   return name.split(" ").map((n) => n[0].toUpperCase()).join()
 }
 

@@ -60,9 +60,18 @@ export async function getSavedPost(id: number): Promise<ServerResponse> {
 
 export async function savePost(url: string, caption: string): Promise<ServerResponse> {
   url = url.replaceAll(" ", "_")
-  let req = await fetch(window.location.origin + "/api/save_shitpost", {
+  let res = await fetch(window.location.origin + "/api/save_shitpost", {
     method: "POST",
     body: `{"url":"${url}", "caption": "${caption}"}`
   })
-  return await req.json()
+  return await res.json()
+}
+
+export async function search(query: string): Promise<ServerResponse> {
+  let body = { Query: query }
+  let res = await fetch(window.location.origin + "/api/search", {
+    method: "PUT",
+    body: JSON.stringify(body)
+  })
+  return await res.json()
 }
