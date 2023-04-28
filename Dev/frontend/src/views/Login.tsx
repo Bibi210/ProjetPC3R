@@ -1,26 +1,22 @@
-import { Button, CircularProgress, Container, TextField, Typography } from "@mui/material"
+import { Button, CircularProgress, Collapse, Container, TextField, Typography } from "@mui/material"
 import "../styles/Login.css"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Navigate } from "react-router-dom";
 
 async function request(email: string, password: string, action: string) {
-    console.log(email, password)
     let req = await fetch(window.location.origin + `/api/${action}`, {
         method: action == "login" ? "PUT" : "POST",
-        headers: {
-            "Content-Type": "text/plain"
-        },
-        mode: "cors",
         body: `{"Login":"${email}", "Mdp":"${password}"}`,
     })
-    let json = await req.json()
-    return json
+    return await req.json()
 }
 
 enum NotificationType { ERROR, NOTIF }
 type Notification = {
+    id: number,
     msg: string,
-    type: NotificationType
+    type: NotificationType,
+    show: boolean
 }
 
 function Login() {
@@ -34,20 +30,42 @@ function Login() {
     const [loggedIn, setLoggedIn] = useState(false)
     const [sendingRequest, setSendingRequest] = useState(false)
 
-    function addNotif(notification: Notification) {
-        setNotifications([notification, ...notifications])
+    let notificationsRef = useRef<Notification[]>(notifications)
+    notificationsRef.current = notifications
+
+    function addNotif(msg: string, type: NotificationType) {
+        function unique_id(id: number): number {
+            for (const a of notifications) {
+                if (a.id == id) {
+                    return unique_id(id + 1)
+                }
+            }
+            return id
+        }
+        let id = unique_id(notifications.length - 1)
+        let notification: Notification = { id, msg, type, show: true }
+        let newNotifsState = [...notifications, notification]
+        setNotifications(newNotifsState)
         setTimeout(() => {
-            setNotifications(notifications.filter((err) => err != notification))
+            setNotifications(notificationsRef.current.map((n) => {
+                if (n.id == id) {
+                    n.show = false
+                }
+                return n
+            }))
+        }, 4500);
+        setTimeout(() => {
+            setNotifications(notificationsRef.current.filter((n) => n.id != id))
         }, 5000)
     }
 
     function validateBeforeRequest(email: string, pass: string, action: string) {
         if (email == "") {
-            addNotif({ msg: "please add an email", type: NotificationType.ERROR })
+            addNotif("please add an email", NotificationType.ERROR)
             return
         }
         if (pass == "") {
-            addNotif({ msg: "please add a password", type: NotificationType.ERROR })
+            addNotif("please add a password", NotificationType.ERROR)
             return
         }
         if (!createAccountMode) {
@@ -57,23 +75,23 @@ function Login() {
                 if (res.Success) {
                     setLoggedIn(true)
                 } else {
-                    addNotif({ msg: res.Message, type: NotificationType.ERROR })
+                    addNotif(res.Message, NotificationType.ERROR)
                 }
             })
             return request(email, pass, action)
         }
         if (password2 != password) {
-            addNotif({ msg: "passwords don't match", type: NotificationType.ERROR })
+            addNotif("passwords don't match", NotificationType.ERROR)
             return
         }
         setSendingRequest(true)
         request(email, pass, action).then(res => {
             setSendingRequest(false)
             if (res.Success) {
-                addNotif({ msg: "account successfully created", type: NotificationType.NOTIF })
+                addNotif("Successfully created account", NotificationType.NOTIF)
                 setCreateAccountMode(false)
             } else {
-                addNotif({ msg: res.Message, type: NotificationType.ERROR })
+                addNotif(res.Message, NotificationType.ERROR)
             }
         })
     }
@@ -82,13 +100,19 @@ function Login() {
         {loggedIn && <Navigate to="/" />}
         <Typography variant="h2"> {createAccountMode ? "Create an account" : "Login"} </Typography>
         <div className="errors">
-            {notifications.map((error) =>
-                <Button
-                    fullWidth
-                    variant="contained"
-                    style={{ backgroundColor: error.type == NotificationType.ERROR ? "#EF5350" : "#3F51B5" }}
-                >{error.msg}</Button>)
-            }
+            {notifications.map((n) =>
+                <Collapse appear={true} key={n.id} in={n.show}>
+                    <Button
+                        fullWidth
+                        variant="contained"
+                        onClick={() => setNotifications(notifications.filter((notif) => notif.id != n.id))}
+                        style={{
+                            backgroundColor: n.type == NotificationType.ERROR ? "#EF5350" : "#3F51B5",
+                            marginBottom: "10px"
+                        }}
+                    >{n.msg}</Button>
+                </Collapse>
+            )}
         </div>
         <div className="input-container">
             <TextField

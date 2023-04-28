@@ -1,10 +1,10 @@
-import {Button, Container, Typography} from "@mui/material";
-import React, {useEffect, useState} from "react";
+import { Button, Container, Typography } from "@mui/material";
+import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom'
 
 async function logoutServer() {
     let req = await fetch(window.location.origin + `/api/logout`, {
-        method: "PUT",
+        method: "GET",
     })
     return await req.json()
 }
@@ -30,16 +30,15 @@ function Logout() {
         {callingServer && !logout &&
             <Typography variant="h2">Logging out</Typography>
         }
-        {!callingServer && logout &&
+        {!callingServer && logout ?
             <Typography variant="h2">Logout successful</Typography>
-        }
-        {!callingServer && !logout &&
+            :
             <>
                 <Typography variant="h2">Error while logging out</Typography>
                 <Button
                     fullWidth
                     variant="contained"
-                    style={{backgroundColor: "#EF5350"}}
+                    style={{ backgroundColor: "#EF5350" }}
                 >{error}</Button>
             </>
         }
