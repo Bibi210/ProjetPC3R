@@ -1,25 +1,19 @@
 import { Button, Container, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom'
-
-async function logoutServer() {
-  let req = await fetch(window.location.origin + `/api/logout`, {
-    method: "GET",
-  })
-  return await req.json()
-}
+import { logout } from '../utils/serverFunctions'
 
 function Logout() {
-  const [logout, setLogout] = useState(false)
+  const [loggedOut, setLoggedOut] = useState(false)
   const [callingServer, setCallingServer] = useState(true)
   const [error, setError] = useState("")
   const navigate = useNavigate()
 
   useEffect(() => {
-    logoutServer().then((res) => {
+    logout().then((res) => {
       setCallingServer(false)
-      if (res.Success == true) {
-        setLogout(true)
+      if (res.Success) {
+        setLoggedOut(true)
         setTimeout(() => navigate("/"), 2000)
       } else {
         setError(res.Message)
@@ -27,10 +21,9 @@ function Logout() {
     })
   }, [])
   return <Container className="main-container">
-    {callingServer && !logout &&
-        <Typography variant="h2">Logging out</Typography>
-    }
-    {!callingServer && logout ?
+    {callingServer && !loggedOut &&
+      <Typography variant="h2">Logging out</Typography>}
+    {!callingServer && loggedOut ?
       <Typography variant="h2">Logout successful</Typography>
       :
       <>

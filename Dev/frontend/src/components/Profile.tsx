@@ -13,38 +13,26 @@ import {
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Post from "./Post";
-
-
-type Post = {
-  Caption: string,
-  Creator: string,
-  Date: string,
-  Upvotes: number,
-  Url: string
-}
-
-export async function getPrivateProfile() {
-  let res = await fetch(window.location.origin + "/api/get_private_profile")
-  let json = await res.json()
-  console.log(json)
-  return json
-}
-
-async function getSavedShitpost(id: number) {
-  let res = await fetch(window.location.origin + "/api/get_saved_shitpost", {})
-}
-
-function initials(name: string) {
-  return name.split(" ").map((n) => n[0].toUpperCase()).join()
-}
+import { Post as PostType, User } from "../utils/types"
+import { getPosts, getPrivateProfile } from "../utils/serverFunctions";
 
 function Profile() {
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [posts, setPosts] = useState<PostType[]>([])
 
   useEffect(() => {
-    getPrivateProfile().then(res => {
-      setUser(res.Result)
+    getPrivateProfile().then(userRes => {
+      let newUser: User = userRes.Result
+      setUser(newUser)
+      getPosts(newUser.Posts).then(postsRes => {
+        if (postsRes.Success) {
+          setPosts(postsRes.Result)
+        } else {
+          console.log(postsRes.Message)
+          // notifie
+        }
+      })
       setLoading(false)
     })
   }, [])
@@ -55,22 +43,21 @@ function Profile() {
           loading ? <CircularProgress /> :
             user ? <Avatar> {initials(user.Username)}</Avatar> : <Avatar></Avatar>
         }
-        title={user ? user.Username : "No connected user"}
-        action={loading ? <CircularProgress /> :
-          user &&
-            <Grid container spacing={1}>
-                <Grid item>
-                    <Button variant="contained"
-                            style={{ backgroundColor: "#EF5350", color: "white" }}>
-                        Delete account
-                    </Button>
-                </Grid>
-                <Grid item>
-                    <Link to="/logout">
-                        <Button variant="contained">Logout</Button>
-                    </Link>
-                </Grid>
+        title={loading ? "" : user ? user.Username : "No connected user"}
+        action={loading ? <CircularProgress /> : user &&
+          <Grid container spacing={1}>
+            <Grid item>
+              <Button variant="contained"
+                      style={{ backgroundColor: "#EF5350", color: "white" }}>
+                Delete account
+              </Button>
             </Grid>
+            <Grid item>
+              <Link to="/logout">
+                <Button variant="contained">Logout</Button>
+              </Link>
+            </Grid>
+          </Grid>
         }
       ></CardHeader>
 
@@ -78,9 +65,9 @@ function Profile() {
         {loading ? <CircularProgress /> :
           user ?
             <List>
-              {user.Posts && user.Posts.map((post: Post) =>
+              {posts.map((post: PostType) =>
                 <ListItem>
-                  <Post loading={false} src={post.Url} caption={post.Caption} controls={false} />
+                  <Post loading={false} src={post.Url} caption={post.Caption} random={false} comments={true} />
                 </ListItem>
               )}
             </List>
@@ -94,6 +81,10 @@ function Profile() {
       </CardContent>
     </Card>
   </Container>
+}
+
+function initials(name: string): string {
+  return name.split(" ").map((n) => n[0].toUpperCase()).join()
 }
 
 export default Profile

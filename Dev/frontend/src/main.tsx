@@ -1,8 +1,5 @@
 import ReactDOM from 'react-dom/client'
-import {
-  createBrowserRouter,
-  RouterProvider
-} from 'react-router-dom'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Base from './views/Base'
 import Login from './views/Login'
 import Logout from "./views/Logout";

@@ -2,23 +2,8 @@ import { Button, CircularProgress, Collapse, Container, TextField, Typography } 
 import "../styles/Login.css"
 import { useRef, useState } from "react"
 import { Navigate } from "react-router-dom";
-
-async function request(email: string, password: string, action: string) {
-  let req = await fetch(window.location.origin + `/api/${action}`, {
-    method: action == "login" ? "PUT" : "POST",
-    body: `{"Login":"${email}", "Mdp":"${password}"}`,
-  })
-  return await req.json()
-}
-
-enum NotificationType { ERROR, NOTIF }
-
-type Notification = {
-  id: number,
-  msg: string,
-  type: NotificationType,
-  show: boolean
-}
+import { Notification, NotificationType } from "../utils/types"
+import { createAccount, login } from "../utils/serverFunctions";
 
 function Login() {
   const [createAccountMode, setCreateAccountMode] = useState(false)
@@ -61,7 +46,7 @@ function Login() {
     }, 5000)
   }
 
-  function validateBeforeRequest(email: string, pass: string, action: string) {
+  function validateBeforeRequest(email: string, pass: string) {
     if (email == "") {
       addNotif("please add an email", NotificationType.ERROR)
       return
@@ -72,7 +57,7 @@ function Login() {
     }
     if (!createAccountMode) {
       setSendingRequest(true)
-      request(email, pass, action).then(res => {
+      login(email, pass).then(res => {
         setSendingRequest(false)
         if (res.Success) {
           setLoggedIn(true)
@@ -80,17 +65,17 @@ function Login() {
           addNotif(res.Message, NotificationType.ERROR)
         }
       })
-      return request(email, pass, action)
+      return login(email, pass)
     }
     if (password2 != password) {
       addNotif("passwords don't match", NotificationType.ERROR)
       return
     }
     setSendingRequest(true)
-    request(email, pass, action).then(res => {
+    createAccount(email, pass).then(res => {
       setSendingRequest(false)
       if (res.Success) {
-        addNotif("Successfully created account", NotificationType.NOTIF)
+        addNotif("Successfully created account", NotificationType.INFO)
         setCreateAccountMode(false)
       } else {
         addNotif(res.Message, NotificationType.ERROR)
@@ -132,19 +117,19 @@ function Login() {
         onChange={(e) => setPassword(e.currentTarget.value)}
       />
       {createAccountMode &&
-          <TextField
-              label="retype password"
-              type="password"
-              variant="filled"
-              error={password2 == ""}
-              helperText={password2 == "" ? "please re enter your password" : ""}
-              onChange={(e) => setPassword2(e.currentTarget.value)}
-          />}
+        <TextField
+          label="retype password"
+          type="password"
+          variant="filled"
+          error={password2 == ""}
+          helperText={password2 == "" ? "please re enter your password" : ""}
+          onChange={(e) => setPassword2(e.currentTarget.value)}
+        />}
     </div>
     <Button
       className="login-btn"
       variant="contained"
-      onClick={() => validateBeforeRequest(email, password, createAccountMode ? "create_account" : "login")}
+      onClick={() => validateBeforeRequest(email, password)}
     >{sendingRequest ? <CircularProgress /> : createAccountMode ? "Create account" : "Login"}</Button>
     <Button
       className="sign-up-btn"

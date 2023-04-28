@@ -4,12 +4,8 @@ import { AppBar, Box, Tab, Tabs, Typography } from '@mui/material'
 import Post from "../components/Post";
 import Profile from "../components/Profile";
 import { useNavigate } from 'react-router-dom';
-
-
-async function callServerRandomShitPost() {
-  let res = await fetch("http://localhost:25565/api/random_shitpost")
-  return await res.json()
-}
+import TopPosts from './TopPosts';
+import { getRandomPost } from '../utils/serverFunctions';
 
 const tabValue = {
   top_posts: 0,
@@ -41,14 +37,14 @@ function Base({ tab }: { tab: "top_posts" | "random_posts" | "search" | "profile
     if (refreshPost) {
       if (tabIndex == 0) {         // top
         setLoading(true)
-        callServerRandomShitPost().then(res => {
+        getRandomPost().then(res => {
           setResponse(res)
           setLoading(false)
           setRefreshPost(false)
         })
       } else if (tabIndex == 1) {  // random
         setLoading(true)
-        callServerRandomShitPost().then(res => {
+        getRandomPost().then(res => {
           setResponse(res)
           setLoading(false)
           setRefreshPost(false)
@@ -74,10 +70,11 @@ function Base({ tab }: { tab: "top_posts" | "random_posts" | "search" | "profile
         </Tabs>
       </AppBar>
       <TabPanel value={tabIndex} index={0}>
-        <Post loading={loading} caption="" src={response.Result} setRefresh={setRefreshPost} controls={true} />
+        <TopPosts />
       </TabPanel>
       <TabPanel value={tabIndex} index={1}>
-        <Post loading={loading} caption="" src={response.Result} setRefresh={setRefreshPost} controls={true} />
+        <Post loading={loading} caption="" src={response.Result} setRefresh={setRefreshPost} random={true}
+              comments={false} />
       </TabPanel>
       <TabPanel value={tabIndex} index={2}>
         Search
