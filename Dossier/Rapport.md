@@ -45,6 +45,7 @@ Un appel à l'API externe a chaque demande de shitpost aléatoire nous renvoie u
 ### Disclaimer
 Il est important de noter que l'API externe utilisée est une API publique et gratuite, et mise a disposition par une personne ou organisation tierce, nous ne pouvons donc pas garantir la disponibilité de permanente de l'API ou la modération des contenus.
 
+\pagebreak
 
 ## Cas d'utilisation
 
@@ -149,6 +150,17 @@ Toujours inspiré par le cours de PAF chaque endpoint nécessitant une authentif
 
 
 ### Base de données
+
+Pour la base de données nous avons pris le parti de stocker les données de l'application dans une base de données relationnelle.\
+Dont voici le schéma:
+
+![Schéma de la base de données](./Figures/BDD.png)
+
+Nous avons choisi de stocker les données de l'application dans une base de données relationnelle pour plusieurs raisons.
+Mais la principale est qu'il s'agit du format de stockage dont nous avons le plus l'habitude, nous évitant d'apprendre un nouveau format de stockage et les techniques associées.
+Il nous est néanmoins nécessaire de critiquer notre schéma de base de données qui a cause d'un trop grand nombre d'indirections  rend les requêtes SQL complexes et lourdes.
+
+Par manque de temps a cause de nos autres projets universitaires nous n'avons pas pu redesigner notre schéma de base de données pour le simplifier ou opter pour un autre format de stockage tel que NoSql.
 
 ## Architecture Frontend
 - Pourquoi React ETC
