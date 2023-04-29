@@ -9,18 +9,18 @@ import (
 	"net/http"
 )
 
-func getToken(r *http.Request) token_string {
+func getToken(r *http.Request) tokenString {
 	cookie, err := r.Cookie("Session")
 	if err != nil {
 		return ""
 	}
-	return token_string(cookie.Value)
+	return tokenString(cookie.Value)
 }
-func parseRequest(r *http.Request) service_input {
+func parseRequest(r *http.Request) serviceInput {
 	defer r.Body.Close()
 	read, err := io.ReadAll(r.Body)
 	Helpers.ServerRuntimeError("Can't Parse Request Body", err)
-	return service_input{read, getToken(r)}
+	return serviceInput{read, getToken(r)}
 }
 func parseResponseToStruct(r *http.Response, t any) {
 	if r == nil || r.StatusCode != 200 {
@@ -31,29 +31,29 @@ func parseResponseToStruct(r *http.Response, t any) {
 	Helpers.ServerRuntimeError("Can't Parse Response Body", err)
 	Helpers.BytesToStruct(body, t)
 }
-func getClientRequest(s service_input, buffer any) {
+func getClientRequest(s serviceInput, buffer any) {
 	Helpers.BytesToStruct(s.msg, buffer)
 }
 
-type token_string string
+type tokenString string
 type username string
 
-type service_input struct {
+type serviceInput struct {
 	msg     []byte
-	session token_string
+	session tokenString
 }
-type service_output struct {
+type ServiceOutput struct {
 	msg            Helpers.OutputJSON
-	newTokenString token_string
+	newTokenString tokenString
 }
 
-type httpValidHandler func(http.ResponseWriter, *http.Request)
-type basicServiceFunc func(service_input) service_output
-type dataServiceFunc func(*sql.DB, service_input) service_output
-type authServiceFunc func(username, *sql.DB, service_input) service_output
+type HttpValidHandler func(http.ResponseWriter, *http.Request)
+type basicServiceFunc func(serviceInput) ServiceOutput
+type dataServiceFunc func(*sql.DB, serviceInput) ServiceOutput
+type authServiceFunc func(username, *sql.DB, serviceInput) ServiceOutput
 
 type Service interface {
-	ToHandler() httpValidHandler
+	ToHandler() HttpValidHandler
 	acceptableMethods() Helpers.AcceptableMethods
 }
 
@@ -62,21 +62,25 @@ type BasicService struct {
 	methods Helpers.AcceptableMethods
 }
 
-func (h BasicService) ToHandler() httpValidHandler {
+func (h BasicService) ToHandler() HttpValidHandler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer Helpers.ErrorCatcher(w)
 		log.Printf("Request: %s %s", r.Method, r.URL.Path)
 		Helpers.CheckMethod(r.Method, h.methods)
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
 		w.Header().Set("Content-Type", "application/json")
 		output := h.service(parseRequest(r))
-		outmsg := Helpers.StructToJSON(output.msg)
+		outputJson := Helpers.StructToJSON(output.msg)
 		if output.newTokenString != "" {
 			// Write new token to cookie
-			cookie_lifetime := int(sessionDuration.Seconds())
-			cookie := http.Cookie{Name: "Session", Value: string(output.newTokenString), MaxAge: cookie_lifetime}
+			cookieLifetime := int(sessionDuration.Seconds())
+			cookie := http.Cookie{Name: "Session", Value: string(output.newTokenString), MaxAge: cookieLifetime}
 			http.SetCookie(w, &cookie)
 		}
-		io.WriteString(w, outmsg)
+		_, err := io.WriteString(w, outputJson)
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -89,8 +93,8 @@ type DataBasedService struct {
 	methods Helpers.AcceptableMethods
 }
 
-func (h DataBasedService) ToHandler() httpValidHandler {
-	f := func(input service_input) service_output {
+func (h DataBasedService) ToHandler() HttpValidHandler {
+	f := func(input serviceInput) ServiceOutput {
 		db := Database.OpenDatabase()
 		defer Database.CleanCloser(db)
 		Database.ShowDatabase(db)
@@ -109,8 +113,8 @@ type AuthServiceHandle struct {
 	methods Helpers.AcceptableMethods
 }
 
-func (h AuthServiceHandle) ToHandler() httpValidHandler {
-	f := func(db *sql.DB, input service_input) service_output {
+func (h AuthServiceHandle) ToHandler() HttpValidHandler {
+	f := func(db *sql.DB, input serviceInput) ServiceOutput {
 		username := verifySession(input.session)
 		output := h.handler(username, db, input)
 		if isLogged(db, username) {
@@ -126,132 +130,132 @@ func (h AuthServiceHandle) acceptableMethods() Helpers.AcceptableMethods {
 	return h.methods
 }
 
-func LoginWithRemember(db *sql.DB, input service_input) service_output {
+func LoginWithRemember(db *sql.DB, input serviceInput) ServiceOutput {
 	var auth Helpers.RequestAuthJSON
 	getClientRequest(input, &auth)
 	token := loginAccount(db, auth)
 	msg := Helpers.OutputJSON{Success: true, Message: "Logged in", Result: token}
-	return service_output{msg, token}
+	return ServiceOutput{msg, token}
 }
 
-func CreateAccount(db *sql.DB, input service_input) service_output {
+func CreateAccount(db *sql.DB, input serviceInput) ServiceOutput {
 	var auth Helpers.RequestAuthJSON
 	getClientRequest(input, &auth)
 	Database.AddUserToDatabase(db, auth.Login, auth.Mdp)
 	result := Helpers.OutputJSON{Success: true, Message: "Account Created"}
-	return service_output{msg: result}
+	return ServiceOutput{msg: result}
 }
 
-func GetPrivateProfile(name username, db *sql.DB, _ service_input) service_output {
+func GetPrivateProfile(name username, db *sql.DB, _ serviceInput) ServiceOutput {
 	result := Helpers.OutputJSON{Success: true, Message: "Profile", Result: Database.GetUser(db, string(name)).Private(db)}
-	return service_output{msg: result}
+	return ServiceOutput{msg: result}
 }
 
-func GetPublicProfile(db *sql.DB, input service_input) service_output {
+func GetPublicProfile(db *sql.DB, input serviceInput) ServiceOutput {
 	var profile Helpers.RequestPublicUserProfileJSON
 	getClientRequest(input, &profile)
 	result := Helpers.OutputJSON{Success: true, Message: "Profile", Result: Database.GetUser(db, profile.Username).Public(db)}
-	return service_output{msg: result}
+	return ServiceOutput{msg: result}
 }
 
-func Logout(name username, db *sql.DB, input service_input) service_output {
+func Logout(name username, db *sql.DB, _ serviceInput) ServiceOutput {
 	logoutAccount(db, name)
-	return service_output{msg: Helpers.OutputJSON{Success: true, Message: "Logged out"}}
+	return ServiceOutput{msg: Helpers.OutputJSON{Success: true, Message: "Logged out"}}
 }
 
-func DeleteAccount(name username, db *sql.DB, input service_input) service_output {
+func DeleteAccount(name username, db *sql.DB, _ serviceInput) ServiceOutput {
 	logoutAccount(db, name)
 	Database.GetUser(db, string(name)).DeleteUser(db)
-	return service_output{msg: Helpers.OutputJSON{Success: true, Message: "Deleted Account"}}
+	return ServiceOutput{msg: Helpers.OutputJSON{Success: true, Message: "Deleted Account"}}
 }
 
-func RandomShitPost(service_input) service_output {
+func RandomShitPost(serviceInput) ServiceOutput {
 	response, err := http.Get("https://api.thedailyshitpost.net/random")
-	Helpers.ServerRuntimeError("Error while getting shitpost", err)
+	Helpers.ServerRuntimeError("Error while getting shitPost", err)
 
-	var shitpost Helpers.APIRandomShitPostJSON
-	parseResponseToStruct(response, &shitpost)
-	if shitpost.Error != "False" {
-		Helpers.OnlyServerError("Remote Error while getting RandomShitpost")
+	var shitPostJSON Helpers.APIRandomShitPostJSON
+	parseResponseToStruct(response, &shitPostJSON)
+	if shitPostJSON.Error != "False" {
+		Helpers.OnlyServerError("Remote Error while getting RandomShitPost")
 	}
-	return service_output{msg: Helpers.OutputJSON{Success: true, Message: "Random Shitpost", Result: shitpost.Url}}
+	return ServiceOutput{msg: Helpers.OutputJSON{Success: true, Message: "Random ShitPost", Result: shitPostJSON.Url}}
 }
 
-func SavePost(name username, db *sql.DB, input service_input) service_output {
+func SavePost(name username, db *sql.DB, input serviceInput) ServiceOutput {
 	var post Helpers.RequestSaveShitPostJSON
 	getClientRequest(input, &post)
-	return service_output{msg: Helpers.OutputJSON{Success: true, Message: "Saved Shitpost", Result: Database.SaveShitPost(db, string(name), post.Url, post.Caption)}}
+	return ServiceOutput{msg: Helpers.OutputJSON{Success: true, Message: "Saved ShitPost", Result: Database.SaveShitPost(db, string(name), post.Url, post.Caption)}}
 }
 
-func GetSavedPost(db *sql.DB, input service_input) service_output {
+func GetSavedPost(db *sql.DB, input serviceInput) ServiceOutput {
 	var post Helpers.RequestOnShitPostJSON
 	getClientRequest(input, &post)
-	result := Helpers.OutputJSON{Success: true, Message: "Shitpost Retrived", Result: Database.GetShitPostAsJSON(db, post.ShitPostId)}
-	return service_output{msg: result}
+	result := Helpers.OutputJSON{Success: true, Message: "ShitPost Retrieved", Result: Database.GetShitPostAsJSON(db, post.ShitPostId)}
+	return ServiceOutput{msg: result}
 }
 
-func GetSavedPosts(db *sql.DB, input service_input) service_output {
-	var shitpostLs Helpers.RequestOnShitPostListJSON
-	getClientRequest(input, &shitpostLs)
-	result := Helpers.OutputJSON{Success: true, Message: "Shitpost List", Result: Database.GetShitPostListAsJSON(db, shitpostLs.ShitPostIds)}
-	return service_output{msg: result}
+func GetSavedPosts(db *sql.DB, input serviceInput) ServiceOutput {
+	var shitPostListJSON Helpers.RequestOnShitPostListJSON
+	getClientRequest(input, &shitPostListJSON)
+	result := Helpers.OutputJSON{Success: true, Message: "ShitPost List", Result: Database.GetShitPostListAsJSON(db, shitPostListJSON.ShitPostIds)}
+	return ServiceOutput{msg: result}
 }
 
-func PostComment(name username, db *sql.DB, input service_input) service_output {
+func PostComment(name username, db *sql.DB, input serviceInput) ServiceOutput {
 	var comment Helpers.RequestSendCommentJSON
 	getClientRequest(input, &comment)
 	Database.SendComment(db, string(name), comment.ShitPostId, comment.Content)
-	return service_output{msg: Helpers.OutputJSON{Success: true, Message: "Posted Comment"}}
+	return ServiceOutput{msg: Helpers.OutputJSON{Success: true, Message: "Posted Comment"}}
 }
 
-func GetSingleComment(db *sql.DB, input service_input) service_output {
+func GetSingleComment(db *sql.DB, input serviceInput) ServiceOutput {
 	var comment Helpers.RequestOnCommentJSON
 	getClientRequest(input, &comment)
 	result := Helpers.OutputJSON{Success: true, Message: "Comment", Result: Database.GetCommentAsJSON(db, comment.CommentId)}
-	return service_output{msg: result}
+	return ServiceOutput{msg: result}
 }
 
-func GetComments(db *sql.DB, input service_input) service_output {
+func GetComments(db *sql.DB, input serviceInput) ServiceOutput {
 	var CommentLs Helpers.RequestOnCommentListJSON
 	getClientRequest(input, &CommentLs)
-	result := Helpers.OutputJSON{Success: true, Message: "Retrived Comments", Result: Database.GetCommentListAsJSON(db, CommentLs.CommentIds)}
-	return service_output{msg: result}
+	result := Helpers.OutputJSON{Success: true, Message: "Retrieved Comments", Result: Database.GetCommentListAsJSON(db, CommentLs.CommentIds)}
+	return ServiceOutput{msg: result}
 }
 
-func PostCommentVote(name username, db *sql.DB, input service_input) service_output {
+func PostCommentVote(name username, db *sql.DB, input serviceInput) ServiceOutput {
 	var vote Helpers.RequestCommentVoteJSON
 	getClientRequest(input, &vote)
 	Database.SaveCommentUpvotes(db, string(name), vote.CommentId, vote.Value)
-	return service_output{msg: Helpers.OutputJSON{Success: true, Message: "Voted"}}
+	return ServiceOutput{msg: Helpers.OutputJSON{Success: true, Message: "Voted"}}
 }
 
-func PostShitPostVote(name username, db *sql.DB, input service_input) service_output {
+func PostShitPostVote(name username, db *sql.DB, input serviceInput) ServiceOutput {
 	var vote Helpers.RequestShitPostVoteJSON
 	getClientRequest(input, &vote)
 	Database.SavePostUpvotes(db, string(name), vote.ShitPostId, vote.Value)
-	return service_output{msg: Helpers.OutputJSON{Success: true, Message: "Voted"}}
+	return ServiceOutput{msg: Helpers.OutputJSON{Success: true, Message: "Voted"}}
 }
 
-func Search(db *sql.DB, input service_input) service_output {
+func Search(db *sql.DB, input serviceInput) ServiceOutput {
 	var search Helpers.RequestSearchJSON
 	getClientRequest(input, &search)
 	output := Helpers.ResponseSearchJSON{ShitPosts: Database.SearchShitPost(db, search.Query), Users: Database.SearchUser(db, search.Query)}
 	result := Helpers.OutputJSON{Success: true, Message: "Search", Result: output}
-	return service_output{msg: result}
+	return ServiceOutput{msg: result}
 }
 
-func GetTopUsers(db *sql.DB, input service_input) service_output {
+func GetTopUsers(db *sql.DB, input serviceInput) ServiceOutput {
 	var top Helpers.RequestTopJSON
 	getClientRequest(input, &top)
 	result := Helpers.OutputJSON{Success: true, Message: "Top Users", Result: Database.GetTopUsersIDS(db, top.Count)}
-	return service_output{msg: result}
+	return ServiceOutput{msg: result}
 }
 
-func GetTopShitPosts(db *sql.DB, input service_input) service_output {
+func GetTopShitPosts(db *sql.DB, input serviceInput) ServiceOutput {
 	var top Helpers.RequestTopJSON
 	getClientRequest(input, &top)
 	result := Helpers.OutputJSON{Success: true, Message: "Top ShitPosts", Result: Database.GetTopPostsIDs(db, top.Count)}
-	return service_output{msg: result}
+	return ServiceOutput{msg: result}
 }
 
 type FrontHandler struct {
@@ -262,7 +266,7 @@ func (h FrontHandler) acceptableMethods() Helpers.AcceptableMethods {
 	return h.methods
 }
 
-func (h FrontHandler) ToHandler() httpValidHandler {
+func (h FrontHandler) ToHandler() HttpValidHandler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "../frontend/dist/index.html")
 	}
