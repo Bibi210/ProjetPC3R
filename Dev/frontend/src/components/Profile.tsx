@@ -9,6 +9,7 @@ import {
   Grid,
   List,
   ListItem,
+  Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -29,10 +30,14 @@ function Profile() {
         getPosts(newUser.Posts).then(postsRes => {
           if (postsRes.Success) {
             console.log(postsRes.Result)
-            setPosts(postsRes.Result)
+            if (postsRes.Result == null) {
+              setPosts([])
+            } else {
+              setPosts(postsRes.Result)
+            }
           } else {
             console.log(postsRes.Message)
-            // notifie
+            // notify
           }
         })
       }
@@ -46,12 +51,13 @@ function Profile() {
           loading ? <CircularProgress /> :
             user ? <Avatar> {initials(user.Username)}</Avatar> : <Avatar></Avatar>
         }
-        title={loading ? "" : user ? user.Username : "No connected user"}
+        title={loading ? "" : user ? <Typography variant="h6">{user.Username}</Typography> : "No connected user"}
         action={loading ? <CircularProgress /> : user &&
           <Grid container spacing={1}>
             <Grid item>
-              <Button variant="contained"
-                      style={{ backgroundColor: "#EF5350", color: "white" }}>
+              <Button
+                variant="contained"
+                style={{ backgroundColor: "#EF5350", color: "white" }}>
                 Delete account
               </Button>
             </Grid>
@@ -68,8 +74,15 @@ function Profile() {
         {loading ? <CircularProgress /> :
           user ?
             <List>
+              {posts.length == 0 &&
+                <Grid container justifyContent="center">
+                  <Grid item>
+                    <Typography variant="h5">Nothing here yet</Typography>
+                  </Grid>
+                </Grid>
+              }
               {posts.map((post: PostType) =>
-                <ListItem>
+                <ListItem key={post.Url + post.Creator + post.Date}>
                   <Post loading={false} src={post.Url} caption={post.Caption} random={false} comments={true} />
                 </ListItem>
               )}

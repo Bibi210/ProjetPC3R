@@ -48,13 +48,17 @@ export async function getPrivateProfile(): Promise<ServerResponse> {
   return json
 }
 
-export async function getRandomPost() {
-  let res = await fetch("http://localhost:25565/api/random_shitpost")
+export async function getPublicProfile(username: string): Promise<ServerResponse> {
+  let body = { Username: username }
+  let res  = await fetch(window.location.origin + "/api/get_public_profile", {
+    method: "PUT",
+    body: JSON.stringify(body)
+  })
   return await res.json()
 }
 
-export async function getSavedPost(id: number): Promise<ServerResponse> {
-  let res = await fetch(window.location.origin + "/api/get_saved_shitpost", {})
+export async function getRandomPost() {
+  let res = await fetch("http://localhost:25565/api/random_shitpost")
   return await res.json()
 }
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import '../styles/Root.css'
-import { AppBar, Box, Tab, Tabs, Typography } from '@mui/material'
+import { AppBar, Box, Tab, Tabs } from '@mui/material'
 import Post from "../components/Post";
 import Profile from "../components/Profile";
 import { useNavigate } from 'react-router-dom';
@@ -106,7 +106,7 @@ function TabPanel(props: TabPanelProps) {
     >
       {value === index && (
         <Box sx={{ p: 3 }}>
-          <Typography>{children}</Typography>
+          {children}
         </Box>
       )}
     </div>

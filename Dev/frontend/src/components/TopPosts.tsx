@@ -11,8 +11,9 @@ function TopPosts() {
 
   function addMorePosts() {
     let oldPostLimit = postLimit
-    setPostLimit(postLimit + 1) // setPostLimit doesn't update postLimit until a new render has happened
+    setPostLimit(postLimit + 1)
     setLoading(true)
+    // setPostLimit doesn't update postLimit until a new render has happened
     getTopPostIds(oldPostLimit + 1).then(idsRes => {
       getPosts(idsRes.Result).then((postsRes) => {
         setLoading(false)
@@ -28,7 +29,13 @@ function TopPosts() {
   }, [])
 
   return <>
-    {posts.map((p) => <Post loading={false} src={p.Url} caption={p.Caption} random={false} comments={true} />)}
+    {posts.map((p) =>
+      <Post
+        key={p.Url + p.Creator + p.Date} loading={false} src={p.Url}
+        caption={p.Caption}
+        random={false} comments={true}
+      />
+    )}
     <Grid container justifyContent="center" marginBottom={4}>
       <Grid item>
         <Button

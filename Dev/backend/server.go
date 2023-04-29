@@ -10,7 +10,7 @@ import (
 	"os/signal"
 )
 
-var cleanDatabase = true
+var cleanDatabase = false
 
 func bootServer(port uint16) {
 	if port <= 1024 {
@@ -21,7 +21,7 @@ func bootServer(port uint16) {
 	}
 	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("../frontend/dist/assets"))))
 	log.Printf("Server Open on http://localhost:%d\n", port)
-	Helpers.ServerRuntimeError("Can't open server",http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	Helpers.ServerRuntimeError("Can't open server", http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
 
 func shutdownListener() {
