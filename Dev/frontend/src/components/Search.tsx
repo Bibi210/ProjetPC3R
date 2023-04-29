@@ -28,18 +28,20 @@ function Search() {
       clearTimeout(keyTimeout.current)
     }
     keyTimeout.current = setTimeout(() => {
-      search(value).then(searchRes => {
-        if (searchRes.Success) {
-          let result: SearchResults = searchRes.Result
-          if (result.ShitPosts == null) {
-            result.ShitPosts = []
+      if (value != "") {
+        search(value).then(searchRes => {
+          if (searchRes.Success) {
+            let result: SearchResults = searchRes.Result
+            if (result.ShitPosts == null) {
+              result.ShitPosts = []
+            }
+            if (result.Users == null) {
+              result.Users = []
+            }
+            setSearchResults(result)
           }
-          if (result.Users == null) {
-            result.Users = []
-          }
-          setSearchResults(result)
-        }
-      })
+        })
+      }
     }, 500)
   }
 
