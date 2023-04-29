@@ -10,18 +10,18 @@ import (
 
 const sessionDuration = 1 * time.Hour
 
-type simple_claims struct {
+type simpleClaims struct {
 	Username  string
 	ExpiresAt string
 }
 
-func (c simple_claims) Exp() time.Time {
+func (c simpleClaims) Exp() time.Time {
 	exp, err := time.Parse(time.ANSIC, c.ExpiresAt)
 	Helpers.ServerRuntimeError("Error while parsing time", err)
 	return exp
 }
 
-func (c simple_claims) Valid() error {
+func (c simpleClaims) Valid() error {
 	db := Database.OpenDatabase()
 	defer Database.CleanCloser(db)
 	if c.Exp().IsZero() {
@@ -37,16 +37,16 @@ func (c simple_claims) Valid() error {
 	return nil
 }
 
-var serverKey = []byte("This is a fun serverkey")
+var serverKey = []byte("This is a fun serverKey")
 
-func tokenToString(token *jwt.Token) token_string {
+func tokenToString(token *jwt.Token) tokenString {
 	out, err := token.SignedString(serverKey)
 	Helpers.ServerRuntimeError("Error While Converting JWT Token to string", err)
-	return token_string(out)
+	return tokenString(out)
 }
 
-func tokenFromString(tokenString token_string) *jwt.Token {
-	token, err := jwt.ParseWithClaims(string(tokenString), &simple_claims{}, func(token *jwt.Token) (interface{}, error) {
+func tokenFromString(tokenString tokenString) *jwt.Token {
+	token, err := jwt.ParseWithClaims(string(tokenString), &simpleClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			Helpers.OnlyServerError("Unexpected signing method")
 			return nil, nil
@@ -57,9 +57,9 @@ func tokenFromString(tokenString token_string) *jwt.Token {
 	return token
 }
 
-func claimsFromString(tokenString token_string) simple_claims {
+func claimsFromString(tokenString tokenString) simpleClaims {
 	token := tokenFromString(tokenString)
-	claims, ok := token.Claims.(*simple_claims)
+	claims, ok := token.Claims.(*simpleClaims)
 	if !ok {
 		Helpers.OnlyServerError("Error While Parsing Claims from string")
 	}
@@ -67,10 +67,10 @@ func claimsFromString(tokenString token_string) simple_claims {
 }
 
 func createToken(db *sql.DB, name string) *jwt.Token {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, simple_claims{})
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, simpleClaims{})
 	expirationTime := time.Now().Add(sessionDuration)
 	expirationTimeStr := Helpers.FormatTime(expirationTime)
-	claims := simple_claims{ExpiresAt: expirationTimeStr, Username: name}
+	claims := simpleClaims{ExpiresAt: expirationTimeStr, Username: name}
 	token.Claims = claims
 	user := Database.GetUser(db, name)
 	user.Session = expirationTime
@@ -80,7 +80,7 @@ func createToken(db *sql.DB, name string) *jwt.Token {
 	return token
 }
 
-func verifySession(tokenString token_string) username {
+func verifySession(tokenString tokenString) username {
 	if tokenString == "" {
 		Helpers.OnlyServerError("User is not logged in")
 	}
@@ -97,19 +97,19 @@ func isLogged(db *sql.DB, username username) bool {
 	return user.Session.After(time.Now())
 }
 
-func extendSession(db *sql.DB, username string) token_string {
+func extendSession(db *sql.DB, username string) tokenString {
 	token := createToken(db, username)
 	return tokenToString(token)
 }
 
-func loginAccount(db *sql.DB, auth Helpers.RequestAuthJSON) token_string {
+func loginAccount(db *sql.DB, auth Helpers.RequestAuthJSON) tokenString {
 	user := Database.GetUser(db, auth.Login)
 	if user.Password != auth.Mdp {
 		Helpers.OnlyServerError("Invalid Password")
 	}
 	token := createToken(db, auth.Login)
-	tokenstr := tokenToString(token)
-	return tokenstr
+	tokenStr := tokenToString(token)
+	return tokenStr
 }
 
 func logoutAccount(db *sql.DB, username username) {
