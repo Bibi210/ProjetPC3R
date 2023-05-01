@@ -61,9 +61,11 @@ export type SearchResults = {
 }
 
 let currentUser: User | null = null
+let fetchingCurrentUser = false
 
 export function getCurrentUser()  {
-  if (!currentUser) {
+  if (!currentUser && !fetchingCurrentUser) {
+    fetchingCurrentUser = true
     getPrivateProfile().then(res => {
       if (res.Success) {
         currentUser = res.Result
