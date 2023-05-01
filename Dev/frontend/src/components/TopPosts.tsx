@@ -31,9 +31,11 @@ function TopPosts() {
   return <>
     {posts.map((p) =>
       <Post
-        key={p.Url + p.Creator + p.Date} loading={false} src={p.Url}
-        caption={p.Caption}
-        random={false} comments={true}
+        key={p.Url + p.Creator + p.Date}
+        loading={false}
+        post={p}
+        randomMode={false}
+        showCommentBtn={true}
       />
     )}
     <Grid container justifyContent="center" marginBottom={4}>

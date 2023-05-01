@@ -74,18 +74,18 @@ function Profile() {
         {loading ? <CircularProgress /> :
           user ?
             <List>
-              {posts.length == 0 &&
+              {posts.length == 0 ?
                 <Grid container justifyContent="center">
                   <Grid item>
                     <Typography variant="h5">Nothing here yet</Typography>
                   </Grid>
                 </Grid>
-              }
-              {posts.map((post: PostType) =>
-                <ListItem key={post.Url + post.Creator + post.Date}>
-                  <Post loading={false} src={post.Url} caption={post.Caption} random={false} comments={true} />
-                </ListItem>
-              )}
+                :
+                posts.map((post: PostType) =>
+                  <ListItem key={post.Url + post.Creator + post.Date}>
+                    <Post loading={false} post={post} randomMode={false} showCommentBtn={true} />
+                  </ListItem>
+                )}
             </List>
             :
             <Link to="/login">

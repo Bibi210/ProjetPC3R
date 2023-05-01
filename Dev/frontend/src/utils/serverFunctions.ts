@@ -50,7 +50,7 @@ export async function getPrivateProfile(): Promise<ServerResponse> {
 
 export async function getPublicProfile(username: string): Promise<ServerResponse> {
   let body = { Username: username }
-  let res  = await fetch(window.location.origin + "/api/get_public_profile", {
+  let res = await fetch(window.location.origin + "/api/get_public_profile", {
     method: "PUT",
     body: JSON.stringify(body)
   })
@@ -58,7 +58,7 @@ export async function getPublicProfile(username: string): Promise<ServerResponse
 }
 
 export async function getRandomPost() {
-  let res = await fetch("http://localhost:25565/api/random_shitpost")
+  let res = await fetch(window.location.origin + "/api/random_shitpost")
   return await res.json()
 }
 
@@ -79,3 +79,22 @@ export async function search(query: string): Promise<ServerResponse> {
   })
   return await res.json()
 }
+
+export async function getComments(ids: number[]): Promise<ServerResponse> {
+  let body = { CommentIds: ids }
+  let res = await fetch(window.location.origin + "/api/get_comment_list", {
+    method: "PUT",
+    body: JSON.stringify(body)
+  })
+  return await res.json()
+}
+
+export async function saveComment(postId: number, content: string): Promise<ServerResponse> {
+  let body = { ShitPostId: postId, Content: content }
+  let res = await fetch(window.location.origin + "/api/post_comment", {
+    method: "POST",
+    body: JSON.stringify(body)
+  })
+  return await res.json()
+}
+

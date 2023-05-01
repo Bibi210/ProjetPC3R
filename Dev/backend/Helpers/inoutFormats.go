@@ -54,6 +54,7 @@ type ResponseUserPrivateProfileJSON struct {
 }
 
 type ResponseSavedShitPostJSON struct {
+	Id         int
 	Url        string
 	Caption    string
 	Creator    string
@@ -63,7 +64,7 @@ type ResponseSavedShitPostJSON struct {
 }
 
 type ResponseMsgJSON struct {
-	Sender  int
+	Sender  string
 	Content string
 	Date    string
 }

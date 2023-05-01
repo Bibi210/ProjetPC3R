@@ -18,7 +18,7 @@ const createUsers = `CREATE TABLE IF NOT EXISTS Users (
 	LastSeen TEXT
 );`
 
-type user_row struct {
+type UserRow struct {
 	userID   int
 	username string
 	Password string
@@ -26,12 +26,12 @@ type user_row struct {
 	LastSeen time.Time
 }
 
-func (u *user_row) String() string {
+func (u UserRow) String() string {
 	return fmt.Sprintf("UserID : %d | Username : %s | Password : %s | Session : %s | LastSeen : %s", u.userID, u.username, u.Password, Helpers.FormatTime(u.Session), Helpers.FormatTime(u.LastSeen))
 }
 
-func ReadFromRowUser(row *sql.Rows) user_row {
-	u := user_row{}
+func ReadFromRowUser(row *sql.Rows) UserRow {
+	u := UserRow{}
 	var lastSeen string
 	var session string
 	Helpers.ServerRuntimeError("Error While Reading Row", row.Scan(&u.userID, &u.username, &u.Password, &session, &lastSeen))
@@ -43,27 +43,27 @@ func ReadFromRowUser(row *sql.Rows) user_row {
 }
 
 func AddUserToDatabase(db *sql.DB, Login string, Mdp string) {
-	user := user_row{username: Login, Password: Mdp, Session: time.Now(), LastSeen: time.Now()}
+	user := UserRow{username: Login, Password: Mdp, Session: time.Now(), LastSeen: time.Now()}
 	executeRequest(db, "INSERT INTO Users (Username, Password, Session, LastSeen) VALUES (?, ?, ?, ?)", user.username, user.Password, Helpers.FormatTime(user.Session), Helpers.FormatTime(user.LastSeen))
 }
 
-func (u *user_row) UpdateUserSession(c *sql.DB) {
+func (u UserRow) UpdateUserSession(c *sql.DB) {
 	executeRequest(c, "UPDATE Users SET Session = ?, LastSeen = ? WHERE UserID = ?", Helpers.FormatTime(u.Session), Helpers.FormatTime(u.LastSeen), u.userID)
 }
 
-func (u user_row) DeleteUser(c *sql.DB) {
+func (u UserRow) DeleteUser(c *sql.DB) {
 	executeRequest(c, "DELETE FROM Users WHERE UserID = ?", u.userID)
 }
 
-func (u user_row) Public(db *sql.DB) Helpers.ResponseUserPublicProfileJSON {
+func (u UserRow) Public(db *sql.DB) Helpers.ResponseUserPublicProfileJSON {
 	return Helpers.ResponseUserPublicProfileJSON{Username: u.username, LastSeen: Helpers.FormatTime(u.LastSeen), Posts: GetUserShitPostsIDS(db, u.username), Comments: GetUserCommentsIDS(db, u.userID), VotedPosts: GetUserVotedShitPostsIDS(db, u.userID), VotedComments: GetUserVotedCommentsIDS(db, u.userID)}
 }
 
-func (u user_row) Private(db *sql.DB) Helpers.ResponseUserPublicProfileJSON {
+func (u UserRow) Private(db *sql.DB) Helpers.ResponseUserPublicProfileJSON {
 	return Helpers.ResponseUserPublicProfileJSON{Username: u.username, LastSeen: Helpers.FormatTime(u.LastSeen), Posts: GetUserShitPostsIDS(db, u.username), Comments: GetUserCommentsIDS(db, u.userID)}
 }
 
-func GetUser(c *sql.DB, username string) user_row {
+func GetUser(c *sql.DB, username string) UserRow {
 	rows := query(c, "SELECT * FROM Users WHERE Username = ?", username)
 	defer rows.Close()
 	if !rows.Next() {
@@ -72,7 +72,7 @@ func GetUser(c *sql.DB, username string) user_row {
 	return ReadFromRowUser(rows)
 }
 
-func GetUserByID(c *sql.DB, id int) user_row {
+func GetUserByID(c *sql.DB, id int) UserRow {
 	rows := query(c, "SELECT * FROM Users WHERE UserID = ?", id)
 	defer rows.Close()
 	if !rows.Next() {
@@ -122,19 +122,19 @@ func GetTopUsersIDS(c *sql.DB, limit int) []int {
 	return ids
 }
 
-func GetUserMessages(c *sql.DB, id int) []msg_row {
+func GetUserMessages(c *sql.DB, id int) []MsgRow {
 	rows := query(c, "SELECT * FROM Msg WHERE Sender = ?", id)
 	defer rows.Close()
-	var msgs []msg_row
+	var msgs []MsgRow
 	for rows.Next() {
-		msgs = append(msgs, ReadFromRowMsg(rows))
+		msgs = append(msgs, ReadFromRowMsg(c, rows))
 	}
 	return msgs
 }
 
-func GetUserComments(c *sql.DB, id int) []comment_row {
+func GetUserComments(c *sql.DB, id int) []CommentRow {
 	msgs := GetUserMessages(c, id)
-	var comments []comment_row
+	var comments []CommentRow
 	for _, msg := range msgs {
 		rows := query(c, "SELECT * FROM Comments WHERE Message = ?", msg.msgID)
 		defer rows.Close()

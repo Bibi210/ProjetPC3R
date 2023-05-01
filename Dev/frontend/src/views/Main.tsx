@@ -74,8 +74,21 @@ function Main({ tab }: { tab: "top_posts" | "random_posts" | "search" | "profile
         <TopPosts />
       </TabPanel>
       <TabPanel value={tabIndex} index={1}>
-        <Post loading={loading} caption="" src={response.Result} setRefresh={setRefreshPost} random={true}
-              comments={false} />
+        <Post
+          loading={loading}
+          setRefresh={setRefreshPost}
+          randomMode={true}
+          showCommentBtn={false}
+          post={{
+            Id: -1,
+            Caption: "",
+            Url: response.Result,
+            CommentIds: [],
+            Creator: "",
+            Date: "",
+            Upvotes: 0
+          }}
+        />
       </TabPanel>
       <TabPanel value={tabIndex} index={2}>
         <Search />

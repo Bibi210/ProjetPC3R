@@ -21,7 +21,7 @@ const createShitPost = `CREATE TABLE IF NOT EXISTS ShitPost (
 		REFERENCES Users(UserID)
 );`
 
-type saved_shitpost_row struct {
+type SavedShitpostRow struct {
 	shitpostID int
 	poster     int
 	caption    string
@@ -29,12 +29,12 @@ type saved_shitpost_row struct {
 	Date       time.Time
 }
 
-func (s *saved_shitpost_row) String() string {
+func (s *SavedShitpostRow) String() string {
 	return fmt.Sprintf("ShitPostID : %d | Poster : %d | Caption : %s | URL : %s | Date : %s", s.shitpostID, s.poster, s.caption, s.url, Helpers.FormatTime(s.Date))
 }
 
-func ReadFromRowShitPost(row *sql.Rows) saved_shitpost_row {
-	r := saved_shitpost_row{}
+func ReadFromRowShitPost(row *sql.Rows) SavedShitpostRow {
+	r := SavedShitpostRow{}
 	var date string
 	Helpers.ServerRuntimeError("Error While Reading Row", row.Scan(&r.shitpostID, &r.poster, &r.caption, &r.url, &date))
 	r.Date = Helpers.ParseTime(date)
@@ -58,7 +58,7 @@ func DeleteShitPost(c *sql.DB, shitpostID int) {
 	executeRequest(c, "DELETE FROM ShitPost WHERE ShitPostID = ?", shitpostID)
 }
 
-func GetShitPost(c *sql.DB, shitpostID int) saved_shitpost_row {
+func GetShitPost(c *sql.DB, shitpostID int) SavedShitpostRow {
 	rows := query(c, "SELECT * FROM ShitPost WHERE ShitPostID = ?", shitpostID)
 	defer rows.Close()
 	if !rows.Next() {
@@ -83,6 +83,7 @@ func GetShitPostAsJSON(c *sql.DB, shitpostID int) Helpers.ResponseSavedShitPostJ
 	shitpost := GetShitPost(c, shitpostID)
 	poster := GetUserByID(c, shitpost.poster)
 	return Helpers.ResponseSavedShitPostJSON{
+		Id:         shitpostID,
 		Url:        shitpost.url,
 		Caption:    shitpost.caption,
 		Creator:    poster.username,

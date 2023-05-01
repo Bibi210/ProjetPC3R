@@ -15,11 +15,13 @@ import React, { useState } from "react";
 import { PostComponentProps } from "../utils/types"
 import { Check } from "@mui/icons-material";
 import { savePost } from "../utils/serverFunctions";
+import Comments from "./Comments";
 
-function Post({ loading, caption, src, setRefresh, random, comments }: PostComponentProps) {
+function Post({ loading, post, setRefresh, randomMode, showCommentBtn }: PostComponentProps) {
   const [saving, setSaving] = useState(false)
   const [saveMenuAnchor, setSaveMenuAnchor] = useState<null | HTMLElement>(null)
   const [savingCaption, setSavingCaption] = useState("");
+  const [showComments, setShowComments] = useState(false);
   let openSaveMenu = Boolean(saveMenuAnchor)
 
   function handleSaveBtnClick(event: React.MouseEvent<HTMLElement>) {
@@ -27,15 +29,14 @@ function Post({ loading, caption, src, setRefresh, random, comments }: PostCompo
   }
 
   function handleCallSavePost() {
-    console.log(savingCaption)
-    savePost(src, savingCaption).then((res) => {
+    savePost(post.Url, savingCaption).then((res) => {
       setSavingCaption("")
       setSaveMenuAnchor(null)
       setSaving(false)
       if (setRefresh) {
         res.Success ?
           setRefresh(true) :
-          console.log(res.Message)
+          console.log(res.Message) // should notify
       }
     })
   }
@@ -52,10 +53,10 @@ function Post({ loading, caption, src, setRefresh, random, comments }: PostCompo
             <Grid item><CircularProgress /></Grid>
           </Grid>
           :
-          (filetype(src) == "mp4" || filetype(src) == "odd") ?
+          (filetype(post.Url) == "mp4" || filetype(post.Url) == "odd") ?
             <CardMedia
               controls={true}
-              src={src}
+              src={post.Url}
               component="video"
               style={{
                 width: "800px",
@@ -64,7 +65,7 @@ function Post({ loading, caption, src, setRefresh, random, comments }: PostCompo
             />
             :
             <CardMedia
-              src={src}
+              src={post.Url}
               component="img"
               style={{
                 width: "800px",
@@ -72,11 +73,11 @@ function Post({ loading, caption, src, setRefresh, random, comments }: PostCompo
               }}
             />
         }
-        {caption != "" &&
+        {post.Caption != "" &&
           <CardContent>
-            <Typography variant="body2">{caption}</Typography>
+            <Typography variant="body2">{post.Caption}</Typography>
           </CardContent>}
-        {random && <CardActions>
+        {randomMode && <CardActions>
           <Button
             variant="contained"
             style={{ backgroundColor: "#EC407A", color: "white" }}
@@ -135,15 +136,19 @@ function Post({ loading, caption, src, setRefresh, random, comments }: PostCompo
             </Box>
           </Menu>
         </CardActions>}
-        {comments &&
-          <Button
-            variant="contained"
-            style={{
-              margin: "8px",
-              width: "calc(100% - 16px)"
-            }}>
-            Comments
-          </Button>
+        {showCommentBtn &&
+          <>
+            <Button
+              variant="contained"
+              onClick={() => setShowComments(!showComments)}
+              style={{
+                margin: "10px",
+                width: "calc(100% - 16px)"
+              }}>
+              Comments
+            </Button>
+            <Comments postId={post.Id} ids={post.CommentIds} showComments={showComments} />
+          </>
         }
       </Card>
     </Grid>

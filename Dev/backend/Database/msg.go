@@ -18,26 +18,28 @@ const createMsg = `CREATE TABLE IF NOT EXISTS Msg (
 		REFERENCES Users(UserID)
 );`
 
-type msg_row struct {
+type MsgRow struct {
 	msgID   int
-	sender  int
+	sender  string
 	content string
 	Date    time.Time
 }
 
-func (m *msg_row) String() string {
-	return fmt.Sprintf("MsgID : %d | Sender : %d | Content : %s | Date : %s", m.msgID, m.sender, m.content, Helpers.FormatTime(m.Date))
+func (m *MsgRow) String() string {
+	return fmt.Sprintf("MsgID : %d | Sender : %s | Content : %s | Date : %s", m.msgID, m.sender, m.content, Helpers.FormatTime(m.Date))
 }
 
-func ReadFromRowMsg(row *sql.Rows) msg_row {
-	r := msg_row{}
+func ReadFromRowMsg(c *sql.DB, row *sql.Rows) MsgRow {
+	r := MsgRow{}
 	var date string
-	Helpers.ServerRuntimeError("Error While Reading Row", row.Scan(&r.msgID, &r.sender, &r.content, &date))
+	var userId int
+	Helpers.ServerRuntimeError("Error While Reading Row", row.Scan(&r.msgID, &userId, &r.content, &date))
 	r.Date = Helpers.ParseTime(date)
+	r.sender = GetUserByID(c, userId).username
 	return r
 }
 
-func SendMsg(c *sql.DB, sender string, content string) msg_row {
+func SendMsg(c *sql.DB, sender string, content string) MsgRow {
 	userID := GetUser(c, sender).userID
 	executeRequest(c, "INSERT INTO Msg (Sender, Content, Date) VALUES (?, ?, ?)", userID, content, Helpers.FormatTime(time.Now()))
 	rows := query(c, "SELECT * FROM Msg WHERE MsgID = (SELECT MAX(MsgID) FROM Msg)")
@@ -45,7 +47,7 @@ func SendMsg(c *sql.DB, sender string, content string) msg_row {
 	if !rows.Next() {
 		Helpers.OnlyServerError("Msg don't exist")
 	}
-	return ReadFromRowMsg(rows)
+	return ReadFromRowMsg(c, rows)
 }
 
 func DeleteMsg(c *sql.DB, msgID int) {
@@ -58,17 +60,17 @@ func GetMsgAsJSON(c *sql.DB, msgID int) Helpers.ResponseMsgJSON {
 	if !rows.Next() {
 		Helpers.OnlyServerError("Msg don't exist")
 	}
-	v := ReadFromRowMsg(rows)
-	return Helpers.ResponseMsgJSON{Content: v.content, Date: Helpers.FormatTime(v.Date)}
+	v := ReadFromRowMsg(c, rows)
+	return Helpers.ResponseMsgJSON{Sender: v.sender, Content: v.content, Date: Helpers.FormatTime(v.Date)}
 }
 
-func GetMsg(c *sql.DB, msgID int) msg_row {
+func GetMsg(c *sql.DB, msgID int) MsgRow {
 	rows := query(c, "SELECT * FROM Msg WHERE MsgID = ?", msgID)
 	defer rows.Close()
 	if !rows.Next() {
 		Helpers.OnlyServerError("Msg don't exist")
 	}
-	return ReadFromRowMsg(rows)
+	return ReadFromRowMsg(c, rows)
 }
 
 func showMsgTable(c *sql.DB) {
@@ -76,6 +78,6 @@ func showMsgTable(c *sql.DB) {
 	rows := query(c, "SELECT * FROM Msg")
 	defer rows.Close()
 	for rows.Next() {
-		fmt.Println(ReadFromRowMsg(rows))
+		fmt.Println(ReadFromRowMsg(c, rows))
 	}
 }

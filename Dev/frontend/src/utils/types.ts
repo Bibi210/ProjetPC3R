@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction } from "react"
+import { getPrivateProfile } from "./serverFunctions";
 
 export type ServerResponse = {
   Message: string,
@@ -16,20 +17,30 @@ export type User = {
 }
 
 export type Post = {
+  Id: number,
   Caption: string,
   Creator: string,
   Date: string,
   Upvotes: number,
-  Url: string
+  Url: string,
+  CommentIds: number[]
+}
+
+export type Comment = {
+  Msg: {
+    Content: string,
+    Date: string,
+    Sender: string
+  },
+  Upvotes: number
 }
 
 export type PostComponentProps = {
   loading: boolean,
-  caption: string,
-  src: string,
+  post: Post,
   setRefresh?: Dispatch<SetStateAction<boolean>>,
-  random: boolean,
-  comments: boolean
+  randomMode: boolean,
+  showCommentBtn: boolean
 }
 
 export enum NotificationType {
@@ -47,4 +58,21 @@ export type Notification = {
 export type SearchResults = {
   ShitPosts: number[],
   Users: string[]
+}
+
+let currentUser: User | null = null
+
+export function getCurrentUser()  {
+  if (!currentUser) {
+    getPrivateProfile().then(res => {
+      if (res.Success) {
+        currentUser = res.Result
+        return currentUser
+      } else {
+        return null
+      }
+    })
+  } else {
+    return currentUser
+  }
 }

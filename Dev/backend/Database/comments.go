@@ -18,18 +18,18 @@ const CreateComments = `CREATE TABLE IF NOT EXISTS Comments (
 		REFERENCES Msg(MsgID)
 );`
 
-type comment_row struct {
+type CommentRow struct {
 	Comid int
 	post  int
-	msg   msg_row
+	msg   MsgRow
 }
 
-func (c *comment_row) String() string {
+func (c *CommentRow) String() string {
 	return fmt.Sprintf("ComID : %d | Post : %d | Msg : %v ", c.Comid, c.post, c.msg)
 }
 
-func ReadFromRowComment(c *sql.DB, row *sql.Rows) comment_row {
-	r := comment_row{}
+func ReadFromRowComment(c *sql.DB, row *sql.Rows) CommentRow {
+	r := CommentRow{}
 	msgID := 0
 	Helpers.ServerRuntimeError("Error While Reading Row", row.Scan(&r.Comid, &r.post, &msgID))
 	r.msg = GetMsg(c, msgID)
@@ -46,7 +46,7 @@ func DeleteComment(c *sql.DB, comID int) {
 	executeRequest(c, "DELETE FROM Comments WHERE ComID = ?", comID)
 }
 
-func GetComment(c *sql.DB, comID int) comment_row {
+func GetComment(c *sql.DB, comID int) CommentRow {
 	rows := query(c, "SELECT * FROM Comments WHERE ComID = ?", comID)
 	defer rows.Close()
 	if !rows.Next() {
