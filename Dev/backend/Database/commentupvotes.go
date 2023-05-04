@@ -15,7 +15,7 @@ const createCommentUpvotes = `CREATE TABLE IF NOT EXISTS CommentUpvotes (
 	Date TEXT NOT NULL,
 	Vote INTEGER NOT NULL,
 	FOREIGN KEY (Comment)
-		REFERENCES Comments(CommentID),
+		REFERENCES Comments(ComID),
 	FOREIGN KEY (Upvoter)
 		REFERENCES Users(UserID)
 );`

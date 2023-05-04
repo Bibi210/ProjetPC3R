@@ -204,8 +204,8 @@ func GetSavedPosts(db *sql.DB, input serviceInput) ServiceOutput {
 func PostComment(name username, db *sql.DB, input serviceInput) ServiceOutput {
 	var comment Helpers.RequestSendCommentJSON
 	getClientRequest(input, &comment)
-	Database.SendComment(db, string(name), comment.ShitPostId, comment.Content)
-	return ServiceOutput{msg: Helpers.OutputJSON{Success: true, Message: "Posted Comment"}}
+	id := Database.SendComment(db, string(name), comment.ShitPostId, comment.Content)
+	return ServiceOutput{msg: Helpers.OutputJSON{Success: true, Message: "Posted Comment", Result: Helpers.ResponseSaveJSON{Id: id}}}
 }
 
 func GetSingleComment(db *sql.DB, input serviceInput) ServiceOutput {

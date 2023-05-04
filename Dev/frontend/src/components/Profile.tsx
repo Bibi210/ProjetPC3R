@@ -14,45 +14,38 @@ import {
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Post from "./Post";
-import { Post as PostType, User } from "../utils/types"
-import { getPosts, getPrivateProfile } from "../utils/serverFunctions";
+import { CurrentUserState, Post as PostType } from "../utils/types"
+import { getPosts } from "../utils/serverFunctions";
 
-function Profile() {
-  const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<User | null>(null)
+function Profile({ currentUserState }: { currentUserState: CurrentUserState }) {
+  const [loading, setLoading] = useState(false)
   const [posts, setPosts] = useState<PostType[]>([])
 
   useEffect(() => {
-    getPrivateProfile().then(userRes => {
-      if (userRes.Success) {
-        let newUser: User = userRes.Result
-        setUser(newUser)
-        getPosts(newUser.Posts).then(postsRes => {
-          if (postsRes.Success) {
-            console.log(postsRes.Result)
-            if (postsRes.Result == null) {
-              setPosts([])
-            } else {
-              setPosts(postsRes.Result)
-            }
-          } else {
-            console.log(postsRes.Message)
-            // notify
-          }
-        })
-      }
-      setLoading(false)
-    })
+    console.log("currentUserState", currentUserState)
+    if (currentUserState && currentUserState.get) {
+      getPosts(currentUserState.get.Posts).then(postsRes => {
+        if (postsRes.Success) {
+          setPosts(postsRes.Result ? postsRes.Result : [])
+        } else {
+          console.log(postsRes.Message)
+          // notify
+        }
+        setLoading(false)
+      })
+    }
   }, [])
   return <Container>
     <Card>
       <CardHeader
         avatar={
           loading ? <CircularProgress /> :
-            user ? <Avatar> {initials(user.Username)}</Avatar> : <Avatar></Avatar>
+            currentUserState && currentUserState.get ? <Avatar> {initials(currentUserState.get.Username)}</Avatar> :
+              <Avatar></Avatar>
         }
-        title={loading ? "" : user ? <Typography variant="h6">{user.Username}</Typography> : "No connected user"}
-        action={loading ? <CircularProgress /> : user &&
+        title={loading ? "" : currentUserState && currentUserState.get ?
+          <Typography variant="h6">{currentUserState.get.Username}</Typography> : "No connected user"}
+        action={loading ? <CircularProgress /> : currentUserState && currentUserState.get &&
           <Grid container spacing={1}>
             <Grid item>
               <Button
@@ -72,7 +65,7 @@ function Profile() {
 
       <CardContent>
         {loading ? <CircularProgress /> :
-          user ?
+          currentUserState && currentUserState.get ?
             <List>
               {posts.length == 0 ?
                 <Grid container justifyContent="center">
@@ -83,7 +76,12 @@ function Profile() {
                 :
                 posts.map((post: PostType) =>
                   <ListItem key={post.Url + post.Creator + post.Date}>
-                    <Post loading={false} post={post} randomMode={false} showCommentBtn={true} />
+                    <Post
+                      currentUserState={currentUserState}
+                      loading={false}
+                      post={post}
+                      randomMode={false}
+                    />
                   </ListItem>
                 )}
             </List>

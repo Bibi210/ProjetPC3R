@@ -36,10 +36,21 @@ func ReadFromRowComment(c *sql.DB, row *sql.Rows) CommentRow {
 	return r
 }
 
-func SendComment(c *sql.DB, sender string, shitpostID int, content string) {
-	msg := SendMsg(c, sender, content)
+func SendComment(c *sql.DB, sender string, shitpostID int, content string) int {
+	msgId := SendMsg(c, sender, content)
 	GetShitPost(c, shitpostID) // Check if shitpost exist
-	executeRequest(c, "INSERT INTO Comments (Post,Message) VALUES (?,?)", shitpostID, msg.msgID)
+	row := query(c, "INSERT INTO Comments (Post,Message) VALUES (?,?) RETURNING ComID", shitpostID, msgId)
+	defer row.Close()
+	var comId int
+	if !row.Next() {
+		Helpers.OnlyServerError("Comment doesn't exist")
+	} else {
+		err := row.Scan(&comId)
+		if err != nil {
+			Helpers.OnlyServerError("Can't read comment row")
+		}
+	}
+	return comId
 }
 
 func DeleteComment(c *sql.DB, comID int) {
@@ -57,7 +68,7 @@ func GetComment(c *sql.DB, comID int) CommentRow {
 
 func GetCommentAsJSON(c *sql.DB, comID int) Helpers.ResponseCommentJSON {
 	com := GetComment(c, comID)
-	return Helpers.ResponseCommentJSON{Msg: GetMsgAsJSON(c, com.msg.msgID), Upvotes: GetCommentVotesTotal(c, comID)}
+	return Helpers.ResponseCommentJSON{Id: com.msg.msgID, Msg: GetMsgAsJSON(c, com.msg.msgID), Upvotes: GetCommentVotesTotal(c, comID)}
 }
 
 func GetCommentListAsJSON(c *sql.DB, comIDs []int) []Helpers.ResponseCommentJSON {

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import Post from "./Post";
-import { Post as PostType } from "../utils/types"
+import { CurrentUserState, Post as PostType } from "../utils/types"
 import { getPosts, getTopPostIds } from "../utils/serverFunctions";
 import { Button, CircularProgress, Grid } from "@mui/material";
 
-function TopPosts() {
+function TopPosts({ currentUserState }: { currentUserState: CurrentUserState }) {
   const [postLimit, setPostLimit] = useState(0)
   const [posts, setPosts] = useState<PostType[]>([])
   const [loading, setLoading] = useState(true)
@@ -35,7 +35,7 @@ function TopPosts() {
         loading={false}
         post={p}
         randomMode={false}
-        showCommentBtn={true}
+        currentUserState={currentUserState}
       />
     )}
     <Grid container justifyContent="center" marginBottom={4}>

@@ -40,6 +40,11 @@ type OutputJSON struct {
 	Message string
 	Result  any
 }
+
+type ResponseSaveJSON struct {
+	Id int
+}
+
 type ResponseUserPublicProfileJSON struct {
 	Username      string
 	Posts         PostIds
@@ -70,6 +75,7 @@ type ResponseMsgJSON struct {
 }
 
 type ResponseCommentJSON struct {
+	Id      int
 	Msg     ResponseMsgJSON
 	Upvotes int
 }

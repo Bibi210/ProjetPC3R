@@ -20,7 +20,7 @@ const createPostUpvotes = `CREATE TABLE IF NOT EXISTS PostUpvotes (
 		REFERENCES Users(UserID)
 );`
 
-type saved_postupvotes_row struct {
+type SavedPostupvotesRow struct {
 	postupvotesID int
 	post          int
 	upvoter       int
@@ -28,12 +28,12 @@ type saved_postupvotes_row struct {
 	vote          int
 }
 
-func (s *saved_postupvotes_row) String() string {
+func (s *SavedPostupvotesRow) String() string {
 	return fmt.Sprintf("PostUpvotesID : %d | Post : %d | Upvoter : %d | Date : %s | Vote : %d", s.postupvotesID, s.post, s.upvoter, Helpers.FormatTime(s.Date), s.vote)
 }
 
-func ReadFromRowPostUpvotes(row *sql.Rows) saved_postupvotes_row {
-	r := saved_postupvotes_row{}
+func ReadFromRowPostUpvotes(row *sql.Rows) SavedPostupvotesRow {
+	r := SavedPostupvotesRow{}
 	var date string
 	Helpers.ServerRuntimeError("Error While Reading Row", row.Scan(&r.postupvotesID, &r.post, &r.upvoter, &date, &r.vote))
 	r.Date = Helpers.ParseTime(date)
@@ -57,11 +57,11 @@ func SavePostUpvotes(c *sql.DB, upvoter string, postID int, vote int) Helpers.Re
 	return Helpers.ResponseUpvoteJSON{Acceptedvalue: vote, PostVotes: GetPostVotesTotal(c, postID)}
 }
 
-func GetPostUpvotes(c *sql.DB, postID int) []saved_postupvotes_row {
+func GetPostUpvotes(c *sql.DB, postID int) []SavedPostupvotesRow {
 	rows, err := c.Query("SELECT * FROM PostUpvotes WHERE Post = ?", postID)
 	Helpers.ServerRuntimeError("Error While Querying PostUpvotes", err)
 	defer rows.Close()
-	var result []saved_postupvotes_row
+	var result []SavedPostupvotesRow
 	for rows.Next() {
 		result = append(result, ReadFromRowPostUpvotes(rows))
 	}
@@ -81,11 +81,11 @@ func GetPostVotesTotal(c *sql.DB, postID int) int {
 	return result
 }
 
-func GetPostUpvotesByUser(c *sql.DB, upvoter int) []saved_postupvotes_row {
+func GetPostUpvotesByUser(c *sql.DB, upvoter int) []SavedPostupvotesRow {
 	rows, err := c.Query("SELECT * FROM PostUpvotes WHERE Upvoter = ?", upvoter)
 	Helpers.ServerRuntimeError("Error While Querying PostUpvotes", err)
 	defer rows.Close()
-	var result []saved_postupvotes_row
+	var result []SavedPostupvotesRow
 	for rows.Next() {
 		result = append(result, ReadFromRowPostUpvotes(rows))
 	}

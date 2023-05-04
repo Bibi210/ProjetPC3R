@@ -39,15 +39,20 @@ func ReadFromRowMsg(c *sql.DB, row *sql.Rows) MsgRow {
 	return r
 }
 
-func SendMsg(c *sql.DB, sender string, content string) MsgRow {
+func SendMsg(c *sql.DB, sender string, content string) int {
 	userID := GetUser(c, sender).userID
-	executeRequest(c, "INSERT INTO Msg (Sender, Content, Date) VALUES (?, ?, ?)", userID, content, Helpers.FormatTime(time.Now()))
-	rows := query(c, "SELECT * FROM Msg WHERE MsgID = (SELECT MAX(MsgID) FROM Msg)")
-	defer rows.Close()
-	if !rows.Next() {
-		Helpers.OnlyServerError("Msg don't exist")
+	row := query(c, "INSERT INTO Msg (Sender, Content, Date) VALUES (?, ?, ?) RETURNING MsgID", userID, content, Helpers.FormatTime(time.Now()))
+	defer row.Close()
+	var msgId int
+	if !row.Next() {
+		Helpers.OnlyServerError("Msg doesn't exist")
+	} else {
+		err := row.Scan(&msgId)
+		if err != nil {
+			Helpers.OnlyServerError("Can't read msg row")
+		}
 	}
-	return ReadFromRowMsg(c, rows)
+	return msgId
 }
 
 func DeleteMsg(c *sql.DB, msgID int) {
@@ -68,7 +73,7 @@ func GetMsg(c *sql.DB, msgID int) MsgRow {
 	rows := query(c, "SELECT * FROM Msg WHERE MsgID = ?", msgID)
 	defer rows.Close()
 	if !rows.Next() {
-		Helpers.OnlyServerError("Msg don't exist")
+		Helpers.OnlyServerError("Msg doesn't exist")
 	}
 	return ReadFromRowMsg(c, rows)
 }

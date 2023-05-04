@@ -1,10 +1,9 @@
-import { Dispatch, SetStateAction } from "react"
-import { getPrivateProfile } from "./serverFunctions";
+import React, { Dispatch, SetStateAction } from "react"
 
-export type ServerResponse = {
+export type ServerResponse<T> = {
   Message: string,
   Success: boolean,
-  Result: any
+  Result: T
 }
 
 export type User = {
@@ -27,6 +26,7 @@ export type Post = {
 }
 
 export type Comment = {
+  Id: number,
   Msg: {
     Content: string,
     Date: string,
@@ -35,12 +35,24 @@ export type Comment = {
   Upvotes: number
 }
 
+export type CurrentUserState = {
+  get: User | null,
+  set: React.Dispatch<SetStateAction<User | null>>,
+  refresh: Function
+}
+
 export type PostComponentProps = {
+  currentUserState: CurrentUserState
   loading: boolean,
   post: Post,
   setRefresh?: Dispatch<SetStateAction<boolean>>,
   randomMode: boolean,
-  showCommentBtn: boolean
+}
+
+export type CommentComponentProps = {
+  currentUserState: CurrentUserState
+  post: Post,
+  showComments: boolean
 }
 
 export enum NotificationType {
@@ -58,23 +70,4 @@ export type Notification = {
 export type SearchResults = {
   ShitPosts: number[],
   Users: string[]
-}
-
-let currentUser: User | null = null
-let fetchingCurrentUser = false
-
-export function getCurrentUser()  {
-  if (!currentUser && !fetchingCurrentUser) {
-    fetchingCurrentUser = true
-    getPrivateProfile().then(res => {
-      if (res.Success) {
-        currentUser = res.Result
-        return currentUser
-      } else {
-        return null
-      }
-    })
-  } else {
-    return currentUser
-  }
 }

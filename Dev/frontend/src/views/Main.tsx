@@ -5,8 +5,9 @@ import Post from "../components/Post";
 import Profile from "../components/Profile";
 import { useNavigate } from 'react-router-dom';
 import TopPosts from '../components/TopPosts';
-import { getRandomPost } from '../utils/serverFunctions';
+import { getPrivateProfile, getPublicProfile, getRandomPost } from '../utils/serverFunctions';
 import Search from "../components/Search";
+import { User, ServerResponse } from "../utils/types";
 
 const tabValue = {
   top_posts: 0,
@@ -16,13 +17,37 @@ const tabValue = {
 }
 
 function Main({ tab }: { tab: "top_posts" | "random_posts" | "search" | "profile" }) {
-  let navigate = useNavigate()
+  const navigate = useNavigate()
 
-  let [loading, setLoading] = useState(true)
-  let [response, setResponse] = useState<any>({})
+  const [loading, setLoading] = useState(true)
+  const [response, setResponse] = useState<ServerResponse<string> | null>(null)
 
-  let [tabIndex, setTabIndex] = React.useState(tabValue[tab]);
-  let [refreshPost, setRefreshPost] = useState(true);
+  const [tabIndex, setTabIndex] = React.useState(tabValue[tab]);
+  const [refreshPost, setRefreshPost] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  function refreshCurrentUser() {
+    getPrivateProfile().then(res => {
+      if (res.Success) {
+        if (res.Result) {
+          let privateUser: User = res.Result
+          getPublicProfile(privateUser.Username).then(resPublic => {
+            if (resPublic.Success) {
+              setCurrentUser(resPublic.Result)
+            }
+          })
+        } else {
+          console.error(res.Message);
+        }
+      } else {
+        console.error(res.Message);
+      }
+    })
+  }
+
+  useEffect(() => {
+    refreshCurrentUser()
+  }, [])
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     if (newValue == 0 || newValue == 1) {
@@ -64,37 +89,37 @@ function Main({ tab }: { tab: "top_posts" | "random_posts" | "search" | "profile
           textColor="inherit"
           variant="fullWidth"
         >
-          <Tab label="Top Posts" />
-          <Tab label="Random Posts" />
-          <Tab label="Search" />
-          <Tab label="Profile" />
+          <Tab label="Top Posts"/>
+          <Tab label="Random Posts"/>
+          <Tab label="Search"/>
+          <Tab label="Profile"/>
         </Tabs>
       </AppBar>
       <TabPanel value={tabIndex} index={0}>
-        <TopPosts />
+        <TopPosts currentUserState={{ get: currentUser, set: setCurrentUser, refresh: refreshCurrentUser }}/>
       </TabPanel>
       <TabPanel value={tabIndex} index={1}>
         <Post
+          currentUserState={{ get: currentUser, set: setCurrentUser, refresh: refreshCurrentUser }}
           loading={loading}
           setRefresh={setRefreshPost}
           randomMode={true}
-          showCommentBtn={false}
           post={{
             Id: -1,
             Caption: "",
-            Url: response.Result,
-            CommentIds: [],
             Creator: "",
             Date: "",
-            Upvotes: 0
+            Upvotes: 0,
+            Url: response ? response.Result : "",
+            CommentIds: []
           }}
         />
       </TabPanel>
       <TabPanel value={tabIndex} index={2}>
-        <Search />
+        <Search currentUserState={{ get: currentUser, set: setCurrentUser, refresh: refreshCurrentUser }}/>
       </TabPanel>
       <TabPanel value={tabIndex} index={3}>
-        <Profile />
+        <Profile currentUserState={{ get: currentUser, set: setCurrentUser, refresh: refreshCurrentUser }}/>
       </TabPanel>
     </>
   )
