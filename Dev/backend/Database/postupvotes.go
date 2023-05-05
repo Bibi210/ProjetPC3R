@@ -42,15 +42,20 @@ func ReadFromRowPostUpvotes(row *sql.Rows) SavedPostupvotesRow {
 
 func SavePostUpvotes(c *sql.DB, upvoter string, postID int, vote int) Helpers.ResponseUpvoteJSON {
 	upvoterID := GetUser(c, upvoter).userID
+	if vote != 1 && vote != -1 && vote != 0 {
+		Helpers.OnlyServerError("Invalid Vote Value")
+	}
 	rows, err := c.Query("SELECT Vote FROM PostUpvotes WHERE Upvoter = ? AND Post = ?", upvoterID, postID)
 	Helpers.ServerRuntimeError("Error While Querying PostUpvotes", err)
-	defer rows.Close()
 	if rows.Next() {
 		var value int
 		Helpers.ServerRuntimeError("Error While Reading Row", rows.Scan(&value))
+		rows.Close()
 		if value == vote {
 			Helpers.OnlyServerError("Already Voted")
 		}
+		_, err = c.Exec("Delete FROM PostUpvotes WHERE Upvoter = ? AND Post = ?", upvoterID, postID)
+		Helpers.ServerRuntimeError("Error While Deleting PostUpvotes", err)
 	}
 	_, err = c.Exec("INSERT INTO PostUpvotes (Post, Upvoter, Date, Vote) VALUES (?, ?, ?, ?)", postID, upvoterID, Helpers.FormatTime(time.Now()), vote)
 	Helpers.ServerRuntimeError("Error While Saving PostUpvotes", err)
@@ -82,7 +87,7 @@ func GetPostVotesTotal(c *sql.DB, postID int) int {
 }
 
 func GetPostUpvotesByUser(c *sql.DB, upvoter int) []SavedPostupvotesRow {
-	rows, err := c.Query("SELECT * FROM PostUpvotes WHERE Upvoter = ?", upvoter)
+	rows, err := c.Query("SELECT * FROM PostUpvotes WHERE Upvoter = ? AND Vote = 1 ORDER BY Date DESC", upvoter)
 	Helpers.ServerRuntimeError("Error While Querying PostUpvotes", err)
 	defer rows.Close()
 	var result []SavedPostupvotesRow
