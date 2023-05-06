@@ -163,11 +163,119 @@ Il nous est néanmoins nécessaire de critiquer notre schéma de base de donnée
 Par manque de temps a cause de nos autres projets universitaires nous n'avons pas pu redesigner notre schéma de base de données pour le simplifier ou opter pour un autre format de stockage tel que NoSql.
 
 ## Architecture Frontend
-- Pourquoi React ETC
-- A remplir
-- une description du client: plan du site contenu des écrans, bien identifier a quels endroits apparaissent les appels aux différents composants du serveur (Genre Prendre les capture et pour certains images/Bouton de l'interfact dire les appels qui on lieu)
+Pour le front, nous avons décidé d'utiliser le framework React avec TypeScript. Le choix de React était fait car cela est le framework le plus utilisé et cela nous a intéressé de l'apprendre et aussi car au cas des problèmes nous aurions pu facilement trouver des ressources en ligne pour nous guider.
 
-- Et la tu raconte ce que tu veux sur l'organisation du code, les librairies utilisées, les choix d'implémentation, etc...
+Nous avons aussi utilisé la librairie MUI pour avoir des composants de style Material car nous avions envisagé notre application avec ce style et nous ne voulions pas recréer ce style entièrement nous-même.
+
+Pour le bundler et outil de constuction nous avons utilisé **Vite** car avec son server de développement il nous permettait de voir les changement qu'on avait réalisé instantanément même sans rafraîchir la page.
+
+### Les Composants
+#### Main
+<p style="color:red">! ajouter capture ici plus tard !</p>
+
+> code source dans `Dev/frontend/src/views/Main.tsx`
+
+Cela est la page principale de notre application et le responsable de la gestion du profil courant et de la gestions des onglets.
+
+##### Gestion du profil courant
+Les contenus de chaque onglet est un composant qui est appelé dans le composant `Main`. Comme toutes les intéractions, à l'exception de la visualisation simple, dépendent d'un profile connecté, nous avons décidé de récupérer cette instance de profile dans le composants `Main` et de donné cette instance (et son setter) comme paramètres pour les autres composants.
+
+Comme nous avons utilisé le hook `useState` de React pour stocker le profile courant, au cas où de changement dans les donnée du profil, tous les composants nécessaires vont réaliser un nouveau rendu. Cela permet d'avoir le même instance de profil dans tous les composants qui dépendent de cela sans un appel au backend pour chaque composant.
+
+##### React Router et les onglets
+En utilisant `React Router`, nous avons réussi à manipuler les routes de notre application en changeant les onglets sans recharger de page. La définition des toutes les routes possibles depuis le frontend est faite dans le point d'entrée de notre application : `Dev/frontend/src/app.tsx`.
+Les quatres routes `/`, `/top`, `random` et `profile` nous mène tous vers le même composants `Main` mais avec un paramètre `tab` différent.
+Le composant `Main` affiche l'onglet corréspondant à la valeur de ce paramètre et en utilisant le hook `useNavigate` de React Router, change le route de l'application quand on change d'onglet, sans recharger la page.
+
+#### Top posts
+<p style="color:red">! ajouter capture ici plus tard !</p>
+
+> code source dans `Dev/frontend/src/components/TopPosts.tsx`
+
+Dans cette onglets, d'abord nous récupérons une liste de ids des posts avec le plus de vote. La taille de cette liste est donné dans l'appel AJAX, cela nous permet de récupèrer plus de posts quand on en a besoin. Nous avons choisi de mettre 10 pour cette taille. Ensuites nous récupérrons les détailles de ces posts avec une requête AJAX et nous créons une instance du composant `Post` pour afficher les détailles de chaque posts récupérer. Nous avons aussi un bouton `Load more posts` qui refait ces deux derniers appel en ajoutant 10 à la taille de la liste des ids.
+
+##### Le Composant Post
+<p style="color:red">! ajouter capture ici plus tard !</p>
+
+> code source dans `Dev/frontend/src/components/Post.tsx`
+
+Ce composant a deux modes d'affichange qui dépends de paramètres `randomMode`.
+- Si `randomMode` est vrai, il affiche les boutons `Pass` et `Save`
+  - le bouton pass charge un nouveau post
+  - le bouton save créer en prennant le titre que l'utilisateur donne dans le popup sauvegarde le post dans le profile du profil connecté.
+- Si `randomMode` est faux, il affiche:
+  - le titre
+  - la date de publication
+  - les boutons de vote et des commentaires
+
+**Note**: le contenu de l'onglet `Random Post` est une instance de ce composant avec le paramètre `randomMode` mis à vrai
+
+##### Le Composant Comments
+<p style="color:red">! ajouter capture ici plus tard !</p>
+
+> code source dans `Dev/frontend/src/components/Comments.tsx`
+
+Ce composant prend en paramètre la liste des commentaires à afficher, récupère le contenu de ces commentaires et les affiche.
+Si il y a un profile actuellement connecté, il affiche aussi un champ de text avec un bouton pour créer un nouveau commentaire.
+
+
+#### Search
+<p style="color:red">! ajouter capture ici plus tard !</p>
+
+> code source dans `Dev/frontend/src/components/Search.tsx`
+
+Pour afficher les résultats des recherches j'ai créer deux nouveaux composants qui prennent la listes des ids des posts/profiles et après ayant récupèrées les bonnes données depuis le backend, affiche son contenu.
+En revanche, nous pensons que cela était mieux de réutiliser le composant des post pour les posts et de créer un paramètre avec lequel on peut décider le style, et de créer un nouveau composant pour les profiles trouvé, ce qu'on aurait pu utilisé dans l'onglet `Profile` aussi. A cause du manque du temps nous avons pas pu réaliser ce changement.
+
+#### Profile
+<p style="color:red">! ajouter capture ici plus tard !</p>
+
+> code source dans `Dev/frontend/src/components/Profile.tsx`
+
+Cette onglet permet de voir les posts que le profile courant a sauvegarder, de supprimer son compte et de déconnecter. Tous les posts afficher sont des instance du composant `Post` et les informations concernant le profile courant sont récupèré depuis le composant `Main`
+
+#### Login
+<p style="color:red">! ajouter capture ici plus tard !</p>
+
+> code source dans `Dev/frontend/src/views/Login.tsx`
+
+Le fonctionnement de cette composant d'afficher les champs nécessaires pour se connecter ou créer un nouveau compte mais aussi de valider si tous les champs avant d'envoyer la requête pour se connecter/créer un nouveau compte. La gestion des modes Login/Créer un compte sont réaliser par un hook `useState`
+
+#### Logout
+<p style="color:red">! ajouter capture ici plus tard !</p>
+
+> code source dans `Dev/frontend/src/views/Logout.tsx`
+
+Ce composant envoie une requête vers `/api/logout` et affiche son résultat.
+
+### Composants avec les points d'api qu'ils accèdent
+- `Main`:
+  - `/api/get_private_profile`
+  - `/api/get_public_profile`
+  - `/api/random_shitpost`
+- `TopPosts`:
+  - `/api/get_top_shitposts`
+  - `/api/get_saved_shitpost_list`
+- `Post`:
+  - `/api/post_shitpost_vote`
+  - `/api/save_shitpost` (pour l'onglet Random Post)
+  - `/api/random_shitpost` (pour l'onglet Random Post)
+- `Comments`:
+  - `/api/post_comment_vote`
+  - `/api/post_comment`
+  - `/api/get_comment_list`
+- `Search`:
+  - `/api/search`
+  - `/api/get_public_profile`
+  - `/api/get_saved_shitpost_list`
+- `Profile`:
+  - `/api/get_saved_shitpost_list`
+- `Login`:
+  - `/api/login`
+  - `/api/create_account`
+- `Logout`:
+  - `/api/logout`
+
 
 \newpage
 
@@ -186,19 +294,19 @@ Voici la liste des dépendances nécessaires pour lancer le projet:
 
 ### Installation manuelle
 
-- SQLite3 : `sudo apt install sqlite3` (Linux)\newline 
-  ou [https://www.sqlite.org/download.html](https://www.sqlite.org/download.html) (Windows)\newline 
+- SQLite3 : `sudo apt install sqlite3` (Linux)\newline
+  ou [https://www.sqlite.org/download.html](https://www.sqlite.org/download.html) (Windows)\newline
   ou `brew install sqlite` (MacOS)
 
 - GoLang : [https://golang.org/doc/install](https://golang.org/doc/install)
-  
+
 - NPM : `sudo apt install npm` (Linux)\newline
   ou [https://nodejs.org/en/download/](https://nodejs.org/en/download/) (Windows) \newline
   ou `brew install node` (MacOS)
 
 ### Installation automatique
 
-- Sqlite3 Driver Pour Go 
+- Sqlite3 Driver Pour Go
 - jwt-go : Implémentation de JWT en Go
 
 
@@ -210,7 +318,14 @@ Le code source du projet se trouve dans le dossier `Dev/` et est divisé en 2 so
 
 Code source du client écrit en ReactJS.
 
-- A remplir
+- `src/components`: Les différents composants utilisés dans les pages.
+- `src/styles`: Les fichiers css pour le style des pages.
+- `src/utils`:
+  - `serverFunctions.ts`: Les requêtes ajax.
+  - `types.ts`: Les définitions des types.
+  - `utils.ts`: Autres fonctions qui sont utilisées dans plusieurs composants
+- `src/views`: Les pages de l'application
+- `src/app.tsx`: Le point d'entrée de l'application, contient aussi la définition des routes.
 
 ### Source Backend
 
