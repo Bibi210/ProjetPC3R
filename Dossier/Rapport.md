@@ -163,11 +163,11 @@ Il nous est néanmoins nécessaire de critiquer notre schéma de base de donnée
 Par manque de temps a cause de nos autres projets universitaires nous n'avons pas pu redesigner notre schéma de base de données pour le simplifier ou opter pour un autre format de stockage tel que NoSql.
 
 ## Architecture Frontend
-Pour le front, nous avons décidé d'utiliser le framework React avec TypeScript. Le choix de React était fait car cela est le framework le plus utilisé et cela nous a intéressé de l'apprendre et aussi car au cas des problèmes nous aurions pu facilement trouver des ressources en ligne pour nous guider.
+Pour le front, nous avons décidé d'utiliser le framework React avec TypeScript. Le choix de React était fait, car cela est le framework le plus utilisé et cela nous a intéressé de l'apprendre et aussi, car au cas des problèmes nous aurions pu facilement trouver des ressources en ligne pour nous guider.
 
-Nous avons aussi utilisé la librairie MUI pour avoir des composants de style Material car nous avions envisagé notre application avec ce style et nous ne voulions pas recréer ce style entièrement nous-même.
+Nous avons aussi utilisé la librairie MUI pour avoir des composants de style Material, car nous avions envisagé notre application avec ce style et nous ne voulions pas recréer ce style entièrement nous-même.
 
-Pour le bundler et outil de constuction nous avons utilisé **Vite** car avec son server de développement il nous permettait de voir les changement qu'on avait réalisé instantanément même sans rafraîchir la page.
+Pour le bundler et outil de construction nous avons utilisé **Vite**, car avec son serveur de développement il nous permettait de voir les changements qu'on avait réalisé instantanément même sans rafraîchir la page.
 
 ### Les Composants
 #### Main
@@ -178,37 +178,37 @@ Pour le bundler et outil de constuction nous avons utilisé **Vite** car avec so
 Cela est la page principale de notre application et le responsable de la gestion du profil courant et de la gestions des onglets.
 
 ##### Gestion du profil courant
-Les contenus de chaque onglet est un composant qui est appelé dans le composant `Main`. Comme toutes les intéractions, à l'exception de la visualisation simple, dépendent d'un profile connecté, nous avons décidé de récupérer cette instance de profile dans le composants `Main` et de donné cette instance (et son setter) comme paramètres pour les autres composants.
+Le contenu de chaque onglet est un composant séparé. Comme toutes les interactions, à l'exception de la visualisation simple, dépendent d'un profil connecté, nous avons décidé de récupérer cette instance de profil dans le composant `Main` et de donné cette instance (et son setter) comme paramètres pour les autres composants.
 
-Comme nous avons utilisé le hook `useState` de React pour stocker le profile courant, au cas où de changement dans les donnée du profil, tous les composants nécessaires vont réaliser un nouveau rendu. Cela permet d'avoir le même instance de profil dans tous les composants qui dépendent de cela sans un appel au backend pour chaque composant.
+Comme nous avons utilisé le hook `useState` de React pour stocker le profil courant, au cas où de changement dans les donnée du profil, tous les composants nécessaires vont réaliser un nouveau rendu. Cela permet d'avoir la même instance de profil dans tous les composants qui dépendent de cela sans un appel au backend pour chaque composant.
 
 ##### React Router et les onglets
 En utilisant `React Router`, nous avons réussi à manipuler les routes de notre application en changeant les onglets sans recharger de page. La définition des toutes les routes possibles depuis le frontend est faite dans le point d'entrée de notre application : `Dev/frontend/src/app.tsx`.
-Les quatres routes `/`, `/top`, `random` et `profile` nous mène tous vers le même composants `Main` mais avec un paramètre `tab` différent.
-Le composant `Main` affiche l'onglet corréspondant à la valeur de ce paramètre et en utilisant le hook `useNavigate` de React Router, change le route de l'application quand on change d'onglet, sans recharger la page.
+Les quatres routes `/`, `/top`, `random` et `profile` nous mène tous vers le même composants `Main`, mais avec un paramètre `tab` différent.
+Le composant `Main` affiche l'onglet corréspondant à la valeur de ce paramètre et en utilisant le hook `useNavigate` de React Router, change la route de l'application quand on change d'onglet, sans recharger la page.
 
 #### Top posts
 <p style="color:red">! ajouter capture ici plus tard !</p>
 
 > code source dans `Dev/frontend/src/components/TopPosts.tsx`
 
-Dans cette onglets, d'abord nous récupérons une liste de ids des posts avec le plus de vote. La taille de cette liste est donné dans l'appel AJAX, cela nous permet de récupèrer plus de posts quand on en a besoin. Nous avons choisi de mettre 10 pour cette taille. Ensuites nous récupérrons les détailles de ces posts avec une requête AJAX et nous créons une instance du composant `Post` pour afficher les détailles de chaque posts récupérer. Nous avons aussi un bouton `Load more posts` qui refait ces deux derniers appel en ajoutant 10 à la taille de la liste des ids.
+Dans cet onglets, d'abord, nous récupérons une liste d'ids des posts avec le plus de vote. La taille de cette liste est donnée dans l'appel AJAX, cela nous permet de récupérer plus de posts quand on en a besoin. Nous avons choisi de mettre 10 pour cette taille. Ensuite, nous récupérons les détails de ces posts avec une requête AJAX et nous créons une instance du composant `Post` pour afficher les détails de chaque post récupéré. Nous avons aussi un bouton `Load more posts` qui refait ces deux derniers appels en ajoutant 10 à la taille de la liste d'ids.
 
 ##### Le Composant Post
 <p style="color:red">! ajouter capture ici plus tard !</p>
 
 > code source dans `Dev/frontend/src/components/Post.tsx`
 
-Ce composant a deux modes d'affichange qui dépends de paramètres `randomMode`.
-- Si `randomMode` est vrai, il affiche les boutons `Pass` et `Save`
-  - le bouton pass charge un nouveau post
-  - le bouton save créer en prennant le titre que l'utilisateur donne dans le popup sauvegarde le post dans le profile du profil connecté.
-- Si `randomMode` est faux, il affiche:
-  - le titre
-  - la date de publication
-  - les boutons de vote et des commentaires
+Ce composant a deux modes d'affichage qui dépends de paramètres `randomMode`.
+- Si `randomMode` est vrai, il affiche les boutons `Pass` et `Save` :
+  - Le bouton `Pass` charge un nouveau post.
+  - Le bouton `Save` créer en prenant le titre que l'utilisateur donne dans le pop-up sauvegarde le post dans le profil de l'utilisateur connecté.
+- Si `randomMode` est faux, il affiche :
+  - Le titre,
+  - La date de publication,
+  - Les boutons de vote et des commentaires.
 
-**Note**: le contenu de l'onglet `Random Post` est une instance de ce composant avec le paramètre `randomMode` mis à vrai
+**Note** : le contenu de l'onglet `Random Post` est une instance de ce composant avec le paramètre `randomMode` mis à vrai.
 
 ##### Le Composant Comments
 <p style="color:red">! ajouter capture ici plus tard !</p>
@@ -216,7 +216,7 @@ Ce composant a deux modes d'affichange qui dépends de paramètres `randomMode`.
 > code source dans `Dev/frontend/src/components/Comments.tsx`
 
 Ce composant prend en paramètre la liste des commentaires à afficher, récupère le contenu de ces commentaires et les affiche.
-Si il y a un profile actuellement connecté, il affiche aussi un champ de text avec un bouton pour créer un nouveau commentaire.
+S'il y a un profil actuellement connecté, il affiche aussi un champ de texte avec un bouton pour créer un nouveau commentaire.
 
 
 #### Search
@@ -224,22 +224,22 @@ Si il y a un profile actuellement connecté, il affiche aussi un champ de text a
 
 > code source dans `Dev/frontend/src/components/Search.tsx`
 
-Pour afficher les résultats des recherches j'ai créer deux nouveaux composants qui prennent la listes des ids des posts/profiles et après ayant récupèrées les bonnes données depuis le backend, affiche son contenu.
-En revanche, nous pensons que cela était mieux de réutiliser le composant des post pour les posts et de créer un paramètre avec lequel on peut décider le style, et de créer un nouveau composant pour les profiles trouvé, ce qu'on aurait pu utilisé dans l'onglet `Profile` aussi. A cause du manque du temps nous avons pas pu réaliser ce changement.
+Pour afficher les résultats des recherches, nous avons créé deux nouveaux composants qui prennent la liste d'ids des posts / profils et après ayant récupérées les bonnes données depuis le backend, affiche son contenu.
+En revanche, nous pensons que cela était mieux de réutiliser le composant des post pour les posts et de créer un paramètre avec lequel on peut décider le style, et de créer un nouveau composant pour les profils trouvé, ce qu'on aurait pu utiliser dans l'onglet `Profile` aussi. À cause du manque du temps nous n'avons pas pu réaliser ce changement.
 
 #### Profile
 <p style="color:red">! ajouter capture ici plus tard !</p>
 
 > code source dans `Dev/frontend/src/components/Profile.tsx`
 
-Cette onglet permet de voir les posts que le profile courant a sauvegarder, de supprimer son compte et de déconnecter. Tous les posts afficher sont des instance du composant `Post` et les informations concernant le profile courant sont récupèré depuis le composant `Main`
+Cet onglet permet de voir les posts que le profil courant a sauvegardé, de supprimer son compte et de se déconnecter. Tous les posts affichés sont des instances du composant `Post` et les informations concernant le profile courant sont récupérés depuis le composant `Main`
 
 #### Login
 <p style="color:red">! ajouter capture ici plus tard !</p>
 
 > code source dans `Dev/frontend/src/views/Login.tsx`
 
-Le fonctionnement de cette composant d'afficher les champs nécessaires pour se connecter ou créer un nouveau compte mais aussi de valider si tous les champs avant d'envoyer la requête pour se connecter/créer un nouveau compte. La gestion des modes Login/Créer un compte sont réaliser par un hook `useState`
+Le fonctionnement de cet composant d'afficher les champs nécessaires pour se connecter ou créer un nouveau compte, mais aussi de valider si tous les champs avant d'envoyer la requête pour se connecter / créer un nouveau compte. La gestion des modes Login / Créer un compte sont réaliser par un hook `useState` de React.
 
 #### Logout
 <p style="color:red">! ajouter capture ici plus tard !</p>
