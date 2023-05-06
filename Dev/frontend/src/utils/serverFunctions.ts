@@ -32,8 +32,8 @@ export async function logout(): Promise<ServerResponse<null>> {
   return await res.json()
 }
 
-export async function createAccount(email: string, password: string): Promise<ServerResponse<null>> {
-  let body = { Login: email, Mdp: password }
+export async function createAccount(login: string, password: string): Promise<ServerResponse<null>> {
+  let body = { Login: login, Mdp: password }
   let res = await fetch(window.location.origin + "/api/create_account", {
     method: "POST",
     body: JSON.stringify(body),
@@ -92,15 +92,6 @@ export async function saveComment(postId: number, content: string)
   let body = { ShitPostId: postId, Content: content }
   let res = await fetch(window.location.origin + "/api/post_comment", {
     method: "POST",
-    body: JSON.stringify(body)
-  })
-  return await res.json()
-}
-
-export async function getComment(id: number): Promise<ServerResponse<Comment>> {
-  let body = { CommentId: id }
-  let res = await fetch(window.location.origin + "/api/get_comment", {
-    method: "PUT",
     body: JSON.stringify(body)
   })
   return await res.json()
