@@ -13,7 +13,7 @@ export function isVoted(postId: number, currentUserState: CurrentUserState) {
 }
 
 export function handleUpvotePost(post: Post, currentUserState: CurrentUserState, up: boolean) {
-  upvotePost(post.Id, post.Upvotes + (up ? 1 : -1)).then(res => {
+  upvotePost(post.Id, up ? 1 : 0).then(res => {
     if (res.Success && currentUserState.get) {
       let newPosts
       if (up)

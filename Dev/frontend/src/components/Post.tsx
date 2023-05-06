@@ -42,7 +42,7 @@ function Post({
       setSaveMenuAnchor(null)
       setSaving(false)
       if (setRefresh) {
-        res.Success ? setRefresh(true) : console.log(res.Message) // ! should notify
+        res.Success ? setRefresh(true) : alert(res.Message)
       }
     })
   }

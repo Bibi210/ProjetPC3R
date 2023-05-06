@@ -45,8 +45,10 @@ function Comments({
   }
 
   function handleVoteComment(comment: Comment, up: boolean) {
-    upvoteComment(comment.Id, up ? 1 : -1).then((res) => {
-      if (res.Success) {
+    upvoteComment(comment.Id, up ? 1 : 0).then((res) => {
+      if (!res.Success) {
+        alert(res.Message)
+      } else {
         let newComments: Comment[] = []
         for (const c of comments) {
           if (c.Id == comment.Id) {
@@ -82,8 +84,6 @@ function Comments({
             newComments.push(c)
           }
         }
-        console.log('arrived to setcomment')
-
         setComments(newComments)
       }
     })
@@ -95,15 +95,27 @@ function Comments({
       setSavingNewComment(false)
       if (res.Success && res.Result) {
         if (!currentUserState || !currentUserState.get) {
-          // !notify
+          alert('could not retrieve current user')
         } else {
+          let newDate = new Date()
           setComments([
             ...comments,
             {
               Id: res.Result.Id,
               Msg: {
                 Content: newComment,
-                Date: new Date().toString(),
+                Date:
+                  newDate.toString().split(' ').slice(0, 2).join(' ') +
+                  ' ' +
+                  newDate.getDate() +
+                  ' ' +
+                  newDate.getHours().toString().padStart(2, '0') +
+                  ':' +
+                  (newDate.getMinutes() % 60).toString().padStart(2, '0') +
+                  ':' +
+                  (newDate.getSeconds() % 3600).toString().padStart(2, '0') +
+                  ' ' +
+                  newDate.getFullYear().toString().padStart(4, '0'),
                 Sender: currentUserState.get.Username,
               },
               Upvotes: 0,
@@ -113,7 +125,7 @@ function Comments({
         }
         setNewComment('')
       } else {
-        // !notify
+        alert(res.Message)
       }
     })
   }
@@ -153,10 +165,7 @@ function Comments({
               <Card variant='outlined' sx={{ marginTop: '10px' }}>
                 <CardActionArea
                   onClick={() =>
-                    handleVoteComment(
-                      comment,
-                      !isVoted(comment.Id)
-                    )
+                    handleVoteComment(comment, !isVoted(comment.Id))
                   }
                 >
                   <Box sx={{ display: 'flex' }}>
@@ -179,18 +188,34 @@ function Comments({
                         >
                           {comment.Msg.Sender}
                         </Typography>
+                        <Typography
+                          variant='subtitle2'
+                          color='text.secondary'
+                          style={{ marginLeft: '10px' }}
+                        >
+                          {comment.Msg.Date}
+                        </Typography>
                       </Box>
                       <Typography component='div' variant='body1'>
-                        {comment.Id + ' ' + comment.Msg.Content}
+                        {comment.Msg.Content}
                       </Typography>
                     </CardContent>
                     <Box
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
+                        alignContent: 'center',
+                        justifyContent: 'center',
                         marginRight: '25px',
                       }}
                     >
+                      <Typography
+                        component='div'
+                        variant='body1'
+                        style={{ marginTop: '4px' }}
+                      >
+                        {comment.Upvotes}
+                      </Typography>
                       <ArrowUpward
                         color={isVoted(comment.Id) ? 'primary' : 'success'}
                       />
