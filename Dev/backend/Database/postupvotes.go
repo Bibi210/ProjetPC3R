@@ -97,8 +97,28 @@ func GetPostUpvotesByUser(c *sql.DB, upvoter int) []SavedPostupvotesRow {
 	return result
 }
 
-func GetUserVotedShitPostsIDS(c *sql.DB, upvoter int) []int {
+func GetPostDownvotesByUser(c *sql.DB, upvoter int) []SavedPostupvotesRow {
+	rows, err := c.Query("SELECT * FROM PostUpvotes WHERE Upvoter = ? AND Vote = -1 ORDER BY Date DESC", upvoter)
+	Helpers.ServerRuntimeError("Error While Querying PostUpvotes", err)
+	defer rows.Close()
+	var result []SavedPostupvotesRow
+	for rows.Next() {
+		result = append(result, ReadFromRowPostUpvotes(rows))
+	}
+	return result
+}
+
+func GetUserUPVotedShitPostsIDS(c *sql.DB, upvoter int) []int {
 	rows := GetPostUpvotesByUser(c, upvoter)
+	var result []int
+	for _, row := range rows {
+		result = append(result, row.post)
+	}
+	return result
+}
+
+func GetUserDOWNVotedShitPostsIDS(c *sql.DB, upvoter int) []int {
+	rows := GetPostDownvotesByUser(c, upvoter)
 	var result []int
 	for _, row := range rows {
 		result = append(result, row.post)

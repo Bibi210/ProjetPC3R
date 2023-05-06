@@ -46,12 +46,14 @@ type ResponseSaveJSON struct {
 }
 
 type ResponseUserPublicProfileJSON struct {
-	Username      string
-	Posts         PostIds
-	Comments      CommentIds
-	LastSeen      string
-	VotedPosts    PostIds
-	VotedComments CommentIds
+	Username          string
+	Posts             PostIds
+	Comments          CommentIds
+	LastSeen          string
+	UPVotedPosts      PostIds
+	DOWNVotedPosts    PostIds
+	UPVotedComments   CommentIds
+	DOWNVotedComments CommentIds
 }
 
 type ResponseUserPrivateProfileJSON struct {

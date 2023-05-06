@@ -87,7 +87,7 @@ func GetCommentVotesTotal(c *sql.DB, commentID int) int {
 	return result
 }
 
-func GetCommentVotesByUser(c *sql.DB, upvoter int) []saved_commentupvotes_row {
+func GetCommentUPVotesByUser(c *sql.DB, upvoter int) []saved_commentupvotes_row {
 	rows, err := c.Query("SELECT * FROM CommentUpvotes WHERE Upvoter = ? AND Vote = 1 ORDER BY Date DESC", upvoter)
 	Helpers.ServerRuntimeError("Error While Querying CommentUpvotes", err)
 	defer rows.Close()
@@ -98,8 +98,28 @@ func GetCommentVotesByUser(c *sql.DB, upvoter int) []saved_commentupvotes_row {
 	return result
 }
 
-func GetUserVotedCommentsIDS(c *sql.DB, upvoter int) []int {
-	rows := GetCommentVotesByUser(c, upvoter)
+func GetUserUPVotedCommentsIDS(c *sql.DB, upvoter int) []int {
+	rows := GetCommentUPVotesByUser(c, upvoter)
+	var result []int
+	for _, row := range rows {
+		result = append(result, row.comment)
+	}
+	return result
+}
+
+func GetCommentDOWNVotesByUser(c *sql.DB, upvoter int) []saved_commentupvotes_row {
+	rows, err := c.Query("SELECT * FROM CommentUpvotes WHERE Upvoter = ? AND Vote = -1 ORDER BY Date DESC", upvoter)
+	Helpers.ServerRuntimeError("Error While Querying CommentUpvotes", err)
+	defer rows.Close()
+	var result []saved_commentupvotes_row
+	for rows.Next() {
+		result = append(result, ReadFromRowCommentUpvotes(rows))
+	}
+	return result
+}
+
+func GetUserDOWNVotedCommentsIDS(c *sql.DB, upvoter int) []int {
+	rows := GetCommentDOWNVotesByUser(c, upvoter)
 	var result []int
 	for _, row := range rows {
 		result = append(result, row.comment)

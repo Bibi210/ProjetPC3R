@@ -56,7 +56,7 @@ func (u UserRow) DeleteUser(c *sql.DB) {
 }
 
 func (u UserRow) Public(db *sql.DB) Helpers.ResponseUserPublicProfileJSON {
-	return Helpers.ResponseUserPublicProfileJSON{Username: u.username, LastSeen: Helpers.FormatTime(u.LastSeen), Posts: GetUserShitPostsIDS(db, u.username), Comments: GetUserCommentsIDS(db, u.userID), VotedPosts: GetUserVotedShitPostsIDS(db, u.userID), VotedComments: GetUserVotedCommentsIDS(db, u.userID)}
+	return Helpers.ResponseUserPublicProfileJSON{Username: u.username, LastSeen: Helpers.FormatTime(u.LastSeen), Posts: GetUserShitPostsIDS(db, u.username), Comments: GetUserCommentsIDS(db, u.userID), UPVotedPosts: GetUserUPVotedShitPostsIDS(db, u.userID), DOWNVotedPosts: GetUserDOWNVotedShitPostsIDS(db, u.userID), UPVotedComments: GetUserUPVotedCommentsIDS(db, u.userID), DOWNVotedComments: GetUserDOWNVotedCommentsIDS(db, u.userID)}
 }
 
 func (u UserRow) Private(db *sql.DB) Helpers.ResponseUserPublicProfileJSON {
