@@ -18,6 +18,15 @@ export async function getPosts(ids: number[]): Promise<ServerResponse<Post[]>> {
   return await res.json()
 }
 
+export async function getPost(id: number): Promise<ServerResponse<Post>> {
+  let body = { ShitPostId: id }
+  let res = await fetch(window.location.origin + "/api/get_saved_shitpost", {
+    method: "PUT",
+    body: JSON.stringify(body)
+  })
+  return await res.json()
+}
+
 export async function login(email: string, password: string): Promise<ServerResponse<string | null>> {
   let body = { Login: email, Mdp: password }
   let res = await fetch(window.location.origin + "/api/login", {
@@ -87,6 +96,15 @@ export async function getComments(ids: number[]): Promise<ServerResponse<Comment
   return await res.json()
 }
 
+export async function getComment(id: number): Promise<ServerResponse<Comment>> {
+  let body = { CommentId: id }
+  let res = await fetch(window.location.origin + "/api/get_comment", {
+    method: 'PUT',
+    body: JSON.stringify(body)
+  })
+  return await res.json()
+}
+
 export async function saveComment(postId: number, content: string)
   : Promise<ServerResponse<{ Id: number } | null>> {
   let body = { ShitPostId: postId, Content: content }
@@ -97,7 +115,7 @@ export async function saveComment(postId: number, content: string)
   return await res.json()
 }
 
-export async function upvotePost(postId: number, value: number): Promise<ServerResponse<null>> {
+export async function votePost(postId: number, value: number): Promise<ServerResponse<null>> {
   let body = { ShitPostId: postId, Value: value }
   let res = await fetch(window.location.origin + "/api/post_shitpost_vote", {
     method: "POST",
@@ -106,7 +124,7 @@ export async function upvotePost(postId: number, value: number): Promise<ServerR
   return await res.json()
 }
 
-export async function upvoteComment(commentId: number, value: number): Promise<ServerResponse<any>> {
+export async function voteComment(commentId: number, value: number): Promise<ServerResponse<any>> {
   let body = { CommentId: commentId, Value: value }
   let res = await fetch(window.location.origin + "/api/post_comment_vote", {
     method: "POST",

@@ -14,15 +14,24 @@ import {
 } from '@mui/material'
 import React, { useState } from 'react'
 import { PostComponentProps } from '../utils/types'
-import { ArrowUpward, Chat, Check } from '@mui/icons-material'
+import {
+  Chat,
+  Check,
+  KeyboardArrowDown,
+  KeyboardArrowUp,
+} from '@mui/icons-material'
 import { savePost } from '../utils/serverFunctions'
 import Comments from './Comments'
-import { handleUpvotePost, isVoted } from '../utils/utils'
+import {
+  isPostUpVoted,
+  isPostDownVoted,
+  handleVotePost,
+} from '../utils/utils'
 
 function Post({
   currentUserState,
   loading,
-  post,
+  post: postProp,
   setRefresh,
   randomMode,
 }: PostComponentProps) {
@@ -30,6 +39,7 @@ function Post({
   const [saveMenuAnchor, setSaveMenuAnchor] = useState<null | HTMLElement>(null)
   const [savingCaption, setSavingCaption] = useState('')
   const [showComments, setShowComments] = useState(false)
+  const [post, setPost] = useState(postProp)
   let openSaveMenu = Boolean(saveMenuAnchor)
 
   function handleSaveBtnClick(event: React.MouseEvent<HTMLElement>) {
@@ -162,26 +172,52 @@ function Post({
                   alignItems: 'center',
                 }}
               >
-                <div>
+                <div style={{ display: 'flex' }}>
                   <IconButton
                     onClick={() =>
-                      handleUpvotePost(
+                      handleVotePost(
                         post,
+                        setPost,
                         currentUserState,
-                        !isVoted(post.Id, currentUserState)
+                        isPostUpVoted(post.Id, currentUserState) ? 0 : 1
                       )
                     }
                   >
-                    <ArrowUpward
+                    <KeyboardArrowUp
                       color={
-                        isVoted(post.Id, currentUserState)
-                          ? 'primary'
-                          : 'success'
+                        isPostUpVoted(post.Id, currentUserState)
+                          ? 'error'
+                          : 'action'
+                      }
+                    />
+                  </IconButton>
+                  <Typography
+                    component='div'
+                    variant='body1'
+                    style={{ marginTop: '10px' }}
+                  >
+                    {post.Upvotes}
+                  </Typography>
+                  <IconButton
+                    onClick={() => {
+                      handleVotePost(
+                        post,
+                        setPost,
+                        currentUserState,
+                        isPostDownVoted(post.Id, currentUserState) ? 0 : -1
+                      )
+                    }}
+                  >
+                    <KeyboardArrowDown
+                      color={
+                        isPostDownVoted(post.Id, currentUserState)
+                          ? 'error'
+                          : 'action'
                       }
                     />
                   </IconButton>
                   <IconButton onClick={() => setShowComments(!showComments)}>
-                    <Chat />
+                    <Chat color={showComments ? 'primary' : 'action'} />
                   </IconButton>
                 </div>
                 <Typography variant='body2'>{post.Date}</Typography>

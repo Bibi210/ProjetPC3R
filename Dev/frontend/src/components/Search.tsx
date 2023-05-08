@@ -22,8 +22,8 @@ import {
 } from '../utils/types'
 import { initials } from './Profile'
 import { filetype } from './Post'
-import { ArrowUpward, Chat } from '@mui/icons-material'
-import { handleUpvotePost, isVoted } from '../utils/utils'
+import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material'
+import { handleVotePost, isPostDownVoted, isPostUpVoted } from '../utils/utils'
 
 function Search({ currentUserState }: { currentUserState: CurrentUserState }) {
   const [searchResults, setSearchResults] = useState<SearchResults>({
@@ -143,17 +143,23 @@ function SearchResultUsers({ usernames }: { usernames: string[] }) {
                 }}
               >
                 <Typography variant='body1' color='text.secondary'>
-                  Posts: {user.Posts ? user.Posts.length : '0'},
+                  Posts: {user.Posts ? user.Posts.length : 0},
                 </Typography>
                 <Typography variant='body1' color='text.secondary'>
-                  Comments: {user.Comments ? user.Comments.length : '0'},
+                  Comments: {user.Comments ? user.Comments.length : 0},
                 </Typography>
                 <Typography variant='body1' color='text.secondary'>
                   Voted Comments:{' '}
-                  {user.VotedComments ? user.VotedComments.length : '0'},
+                  {(user.UPVotedComments ? user.UPVotedComments.length : 0) +
+                    (user.DOWNVotedComments
+                      ? user.DOWNVotedComments.length
+                      : 0)}
+                  ,
                 </Typography>
                 <Typography variant='body1' color='text.secondary'>
-                  Voted Posts: {user.VotedPosts ? user.VotedPosts.length : '0'}
+                  Voted Posts:{' '}
+                  {(user.UPVotedPosts ? user.UPVotedPosts.length : 0) +
+                    (user.DOWNVotedPosts ? user.DOWNVotedPosts.length : 0)}
                 </Typography>
               </Box>
             </CardContent>
@@ -223,21 +229,39 @@ function SearchResultPosts({
             <Box sx={{ display: 'flex', alignItems: 'center', pl: 1, pb: 1 }}>
               <IconButton
                 onClick={() =>
-                  handleUpvotePost(
+                  handleVotePost(
                     post,
+                    null,
                     currentUserState,
-                    !isVoted(post.Id, currentUserState)
+                    isPostUpVoted(post.Id, currentUserState) ? 0 : 1
                   )
                 }
               >
-                <ArrowUpward
+                <KeyboardArrowUp
                   color={
-                    isVoted(post.Id, currentUserState) ? 'primary' : 'success'
+                    isPostUpVoted(post.Id, currentUserState)
+                      ? 'error'
+                      : 'action'
                   }
                 />
               </IconButton>
-              <IconButton aria-label='comments'>
-                <Chat />
+              <IconButton
+                onClick={() =>
+                  handleVotePost(
+                    post,
+                    null,
+                    currentUserState,
+                    isPostDownVoted(post.Id, currentUserState) ? 0 : -1
+                  )
+                }
+              >
+                <KeyboardArrowDown
+                  color={
+                    isPostDownVoted(post.Id, currentUserState)
+                      ? 'error'
+                      : 'action'
+                  }
+                />
               </IconButton>
             </Box>
           </Box>

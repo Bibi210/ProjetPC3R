@@ -9,10 +9,12 @@ export type ServerResponse<T> = {
 export type User = {
   Username: string
   LastSeen: string
-  Posts: number[]
-  Comments: number[]
-  VotedComments: number[]
-  VotedPosts: number[]
+  Posts: number[] | null
+  Comments: number[] | null
+  UPVotedComments: number[] | null
+  UPVotedPosts: number[] | null
+  DOWNVotedComments: number[] | null
+  DOWNVotedPosts: number[] | null
 }
 
 export type Post = {

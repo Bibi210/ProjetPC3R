@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react'
-import {
-  getComments,
-  saveComment,
-  upvoteComment,
-} from '../utils/serverFunctions'
+import { getComments, saveComment, voteComment } from '../utils/serverFunctions'
 import { Comment, CommentComponentProps } from '../utils/types'
 import {
   Avatar,
@@ -20,8 +16,13 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { ArrowUpward } from '@mui/icons-material'
+import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material'
 import { initials } from './Profile'
+import {
+  handleVoteComment,
+  isCommentDownVoted,
+  isCommentUpVoted,
+} from '../utils/utils'
 
 function Comments({
   currentUserState,
@@ -32,62 +33,6 @@ function Comments({
   const [show, setShow] = useState(false)
   const [newComment, setNewComment] = useState('')
   const [savingNewComment, setSavingNewComment] = useState(false)
-
-  function isVoted(commentId: number) {
-    if (!currentUserState || !currentUserState.get) {
-      // !notify
-      return false
-    } else if (currentUserState.get.VotedComments) {
-      return currentUserState.get.VotedComments.includes(commentId)
-    } else {
-      return false
-    }
-  }
-
-  function handleVoteComment(comment: Comment, up: boolean) {
-    upvoteComment(comment.Id, up ? 1 : 0).then((res) => {
-      if (!res.Success) {
-        alert(res.Message)
-      } else {
-        let newComments: Comment[] = []
-        for (const c of comments) {
-          if (c.Id == comment.Id) {
-            newComments.push({
-              Id: c.Id,
-              Msg: c.Msg,
-              Upvotes: c.Upvotes + (up ? 1 : -1),
-            })
-
-            if (currentUserState.get) {
-              let newVotedComments
-              if (up)
-                newVotedComments = currentUserState.get.VotedComments
-                  ? [...currentUserState.get.VotedComments, comment.Id]
-                  : [comment.Id]
-              else
-                newVotedComments = currentUserState.get.VotedComments
-                  ? currentUserState.get.VotedComments.filter(
-                      (comId) => comId != c.Id
-                    )
-                  : []
-
-              currentUserState.set({
-                ...currentUserState.get,
-                VotedComments: newVotedComments,
-              })
-            } else {
-              console.error(
-                'upvoted comment without active user, should not happen'
-              )
-            }
-          } else {
-            newComments.push(c)
-          }
-        }
-        setComments(newComments)
-      }
-    })
-  }
 
   function handleSaveComment() {
     setSavingNewComment(true)
@@ -165,7 +110,12 @@ function Comments({
               <Card variant='outlined' sx={{ marginTop: '10px' }}>
                 <CardActionArea
                   onClick={() =>
-                    handleVoteComment(comment, !isVoted(comment.Id))
+                    handleVoteComment(
+                      comment,
+                      comments,
+                      setComments,
+                      currentUserState
+                    )
                   }
                 >
                   <Box sx={{ display: 'flex' }}>
@@ -209,6 +159,13 @@ function Comments({
                         marginRight: '25px',
                       }}
                     >
+                      <KeyboardArrowUp
+                        color={
+                          isCommentUpVoted(comment.Id, currentUserState)
+                            ? 'error'
+                            : 'action'
+                        }
+                      />
                       <Typography
                         component='div'
                         variant='body1'
@@ -216,8 +173,12 @@ function Comments({
                       >
                         {comment.Upvotes}
                       </Typography>
-                      <ArrowUpward
-                        color={isVoted(comment.Id) ? 'primary' : 'success'}
+                      <KeyboardArrowDown
+                        color={
+                          isCommentDownVoted(comment.Id, currentUserState)
+                            ? 'error'
+                            : 'action'
+                        }
                       />
                     </Box>
                   </Box>
