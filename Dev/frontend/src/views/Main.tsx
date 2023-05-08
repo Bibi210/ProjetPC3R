@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import '../styles/Root.css'
-import { AppBar, Box, Tab, Tabs } from '@mui/material'
+import { AppBar, Box, Grid, Tab, Tabs } from '@mui/material'
 import Post from '../components/Post'
 import Profile from '../components/Profile'
 import { useNavigate } from 'react-router-dom'
@@ -92,7 +92,7 @@ function Main({
   }, [refreshPost])
 
   return (
-    <>
+    <div style={{backgroundColor: "black", minHeight: "100vh"}}>
       <AppBar position='sticky'>
         <Tabs
           value={tabIndex}
@@ -117,25 +117,29 @@ function Main({
         />
       </TabPanel>
       <TabPanel value={tabIndex} index={1}>
-        <Post
-          currentUserState={{
-            get: currentUser,
-            set: setCurrentUser,
-            refresh: refreshCurrentUser,
-          }}
-          loading={loading}
-          setRefresh={setRefreshPost}
-          randomMode={true}
-          post={{
-            Id: -1,
-            Caption: '',
-            Creator: '',
-            Date: '',
-            Upvotes: 0,
-            Url: response ? response.Result : '',
-            CommentIds: [],
-          }}
-        />
+        <Grid container justifyContent='center' marginBottom={4}>
+          <Grid item>
+            <Post
+              currentUserState={{
+                get: currentUser,
+                set: setCurrentUser,
+                refresh: refreshCurrentUser,
+              }}
+              loading={loading}
+              setRefresh={setRefreshPost}
+              randomMode={true}
+              post={{
+                Id: -1,
+                Caption: '',
+                Creator: '',
+                Date: '',
+                Upvotes: 0,
+                Url: response ? response.Result : '',
+                CommentIds: [],
+              }}
+            />
+          </Grid>
+        </Grid>
       </TabPanel>
       <TabPanel value={tabIndex} index={2}>
         <Search
@@ -155,7 +159,7 @@ function Main({
           }}
         />
       </TabPanel>
-    </>
+    </div>
   )
 }
 

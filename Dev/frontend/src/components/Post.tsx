@@ -22,11 +22,7 @@ import {
 } from '@mui/icons-material'
 import { savePost } from '../utils/serverFunctions'
 import Comments from './Comments'
-import {
-  isPostUpVoted,
-  isPostDownVoted,
-  handleVotePost,
-} from '../utils/utils'
+import { isPostUpVoted, isPostDownVoted, handleVotePost } from '../utils/utils'
 
 function Post({
   currentUserState,
@@ -58,180 +54,178 @@ function Post({
   }
 
   return (
-    <Grid container justifyContent='center' marginBottom={4}>
-      <Grid item>
-        <Card>
-          {loading ? (
-            <Grid
-              container
-              justifyContent='center'
-              alignContent='center'
-              style={{ width: '800px', height: '600px' }}
+    <Card>
+      {loading ? (
+        <Grid
+          container
+          justifyContent='center'
+          alignContent='center'
+          style={{ width: '800px', height: '600px' }}
+        >
+          <Grid item>
+            <CircularProgress />
+          </Grid>
+        </Grid>
+      ) : filetype(post.Url) == 'mp4' || filetype(post.Url) == 'odd' ? (
+        <CardMedia
+          controls={true}
+          src={post.Url}
+          component='video'
+          style={{
+            width: '800px',
+            height: '600px',
+          }}
+        />
+      ) : (
+        <CardMedia
+          src={post.Url}
+          component='img'
+          style={{
+            width: '800px',
+            height: '600px',
+          }}
+        />
+      )}
+      {post.Caption != '' && (
+        <CardContent>
+          <Typography variant='body2'>{post.Caption}</Typography>
+        </CardContent>
+      )}
+      {randomMode && (
+        <CardActions>
+          <Button
+            variant='contained'
+            color='secondary'
+            style={{ color: 'white' }}
+            fullWidth={true}
+            onClick={() => {
+              if (setRefresh) setRefresh(true)
+            }}
+          >
+            Pass
+          </Button>
+          <Button
+            variant='contained'
+            color='primary'
+            style={{ color: 'white' }}
+            fullWidth={true}
+            onClick={(e) => {
+              handleSaveBtnClick(e)
+            }}
+          >
+            {saving ? <CircularProgress /> : 'Save'}
+          </Button>
+          <Menu
+            open={openSaveMenu}
+            anchorEl={saveMenuAnchor}
+            onClose={() => {
+              setSaveMenuAnchor(null)
+            }}
+          >
+            <Box
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                alignContent: 'center',
+                gap: '10px',
+                padding: '10px',
+              }}
             >
-              <Grid item>
-                <CircularProgress />
-              </Grid>
-            </Grid>
-          ) : filetype(post.Url) == 'mp4' || filetype(post.Url) == 'odd' ? (
-            <CardMedia
-              controls={true}
-              src={post.Url}
-              component='video'
-              style={{
-                width: '800px',
-                height: '600px',
-              }}
-            />
-          ) : (
-            <CardMedia
-              src={post.Url}
-              component='img'
-              style={{
-                width: '800px',
-                height: '600px',
-              }}
-            />
-          )}
-          {post.Caption != '' && (
-            <CardContent>
-              <Typography variant='body2'>{post.Caption}</Typography>
-            </CardContent>
-          )}
-          {randomMode && (
-            <CardActions>
-              <Button
-                variant='contained'
-                style={{ backgroundColor: '#EC407A', color: 'white' }}
-                fullWidth={true}
-                onClick={() => {
-                  if (setRefresh) setRefresh(true)
+              <Typography variant='subtitle1'>Caption</Typography>
+              <TextField
+                variant='outlined'
+                autoFocus={true}
+                value={savingCaption}
+                size='small'
+                onChange={(e) => {
+                  setSavingCaption(e.target.value)
                 }}
-              >
-                Pass
-              </Button>
-              <Button
-                variant='contained'
-                style={{ backgroundColor: '#66BB6A', color: 'white' }}
-                fullWidth={true}
-                onClick={(e) => {
-                  handleSaveBtnClick(e)
+                onKeyUp={(e) => {
+                  if (e.key == 'Enter') {
+                    handleSavePost()
+                  }
                 }}
-              >
-                {saving ? <CircularProgress /> : 'Save'}
-              </Button>
-              <Menu
-                open={openSaveMenu}
-                anchorEl={saveMenuAnchor}
-                onClose={() => {
-                  setSaveMenuAnchor(null)
-                }}
-              >
-                <Box
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    alignContent: 'center',
-                    gap: '10px',
-                    padding: '10px',
-                  }}
-                >
-                  <Typography variant='subtitle1'>Caption</Typography>
-                  <TextField
-                    variant='outlined'
-                    autoFocus={true}
-                    value={savingCaption}
-                    size='small'
-                    onChange={(e) => {
-                      setSavingCaption(e.target.value)
-                    }}
-                    onKeyUp={(e) => {
-                      if (e.key == 'Enter') {
-                        handleSavePost()
-                      }
-                    }}
-                  />
-                  <Button
-                    variant='contained'
-                    onClick={() => {
-                      handleSavePost()
-                    }}
-                  >
-                    <Check />
-                  </Button>
-                </Box>
-              </Menu>
-            </CardActions>
-          )}
-          {!randomMode && (
-            <>
-              <Box
-                sx={{
-                  margin: '5px 10px 10px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <div style={{ display: 'flex' }}>
-                  <IconButton
-                    onClick={() =>
-                      handleVotePost(
-                        post,
-                        setVotes,
-                        currentUserState,
-                        isPostUpVoted(post.Id, currentUserState) ? 0 : 1
-                      )
-                    }
-                  >
-                    <KeyboardArrowUp
-                      color={
-                        isPostUpVoted(post.Id, currentUserState)
-                          ? 'error'
-                          : 'action'
-                      }
-                    />
-                  </IconButton>
-                  <Typography
-                    component='div'
-                    variant='body1'
-                    style={{ marginTop: '10px' }}
-                  >
-                    {votes}
-                  </Typography>
-                  <IconButton
-                    onClick={() => {
-                      handleVotePost(
-                        post,
-                        setVotes,
-                        currentUserState,
-                        isPostDownVoted(post.Id, currentUserState) ? 0 : -1
-                      )
-                    }}
-                  >
-                    <KeyboardArrowDown
-                      color={
-                        isPostDownVoted(post.Id, currentUserState)
-                          ? 'error'
-                          : 'action'
-                      }
-                    />
-                  </IconButton>
-                  <IconButton onClick={() => setShowComments(!showComments)}>
-                    <Chat color={showComments ? 'primary' : 'action'} />
-                  </IconButton>
-                </div>
-                <Typography variant='body2'>{post.Date}</Typography>
-              </Box>
-              <Comments
-                currentUserState={currentUserState}
-                post={post}
-                showComments={showComments}
               />
-            </>
-          )}
-        </Card>
-      </Grid>
-    </Grid>
+              <Button
+                variant='contained'
+                onClick={() => {
+                  handleSavePost()
+                }}
+              >
+                <Check />
+              </Button>
+            </Box>
+          </Menu>
+        </CardActions>
+      )}
+      {!randomMode && (
+        <>
+          <Box
+            sx={{
+              margin: '5px 10px 10px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <div style={{ display: 'flex' }}>
+              <IconButton
+                onClick={() =>
+                  handleVotePost(
+                    post,
+                    setVotes,
+                    currentUserState,
+                    isPostUpVoted(post.Id, currentUserState) ? 0 : 1
+                  )
+                }
+              >
+                <KeyboardArrowUp
+                  color={
+                    isPostUpVoted(post.Id, currentUserState)
+                      ? 'secondary'
+                      : 'action'
+                  }
+                />
+              </IconButton>
+              <Typography
+                component='div'
+                variant='body1'
+                style={{ marginTop: '10px' }}
+              >
+                {votes}
+              </Typography>
+              <IconButton
+                onClick={() => {
+                  handleVotePost(
+                    post,
+                    setVotes,
+                    currentUserState,
+                    isPostDownVoted(post.Id, currentUserState) ? 0 : -1
+                  )
+                }}
+              >
+                <KeyboardArrowDown
+                  color={
+                    isPostDownVoted(post.Id, currentUserState)
+                      ? 'secondary'
+                      : 'action'
+                  }
+                />
+              </IconButton>
+              <IconButton onClick={() => setShowComments(!showComments)}>
+                <Chat color={showComments ? 'primary' : 'action'} />
+              </IconButton>
+            </div>
+            <Typography variant='body2'>{post.Date}</Typography>
+          </Box>
+          <Comments
+            currentUserState={currentUserState}
+            post={post}
+            showComments={showComments}
+          />
+        </>
+      )}
+    </Card>
   )
 }
 

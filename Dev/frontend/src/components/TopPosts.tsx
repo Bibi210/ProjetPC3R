@@ -33,30 +33,31 @@ function TopPosts({
   }, [])
 
   return (
-    <>
+    <Grid container justifyContent='center' marginBottom={4}>
       {posts.map((p) => (
-        <Post
-          key={p.Url + p.Creator + p.Date}
-          loading={false}
-          post={p}
-          randomMode={false}
-          currentUserState={currentUserState}
-        />
-      ))}
-      <Grid container justifyContent='center' marginBottom={4}>
-        <Grid item>
-          <Button
-            variant='contained'
-            onClick={() => addMorePosts()}
-            style={{
-              width: '840px',
-            }}
-          >
-            {loading ? <CircularProgress /> : 'Load more posts'}
-          </Button>
+        <Grid key={p.Id} item margin='10px'>
+          <Post
+            key={p.Url + p.Creator + p.Date}
+            loading={false}
+            post={p}
+            randomMode={false}
+            currentUserState={currentUserState}
+          />
         </Grid>
+      ))}
+      <Grid item>
+        <Button
+          variant='contained'
+          onClick={() => addMorePosts()}
+          style={{
+            width: '840px',
+            margin: '50px'
+          }}
+        >
+          {loading ? <CircularProgress /> : 'Load more posts'}
+        </Button>
       </Grid>
-    </>
+    </Grid>
   )
 }
 

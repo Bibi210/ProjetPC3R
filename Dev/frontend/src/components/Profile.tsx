@@ -22,7 +22,7 @@ function Profile({ currentUserState }: { currentUserState: CurrentUserState }) {
   const [posts, setPosts] = useState<PostType[]>([])
 
   useEffect(() => {
-    if (currentUserState && currentUserState.get) {
+    if (currentUserState && currentUserState.get && currentUserState.get.Posts) {
       getPosts(currentUserState.get.Posts).then((postsRes) => {
         if (postsRes.Success) {
           setPosts(postsRes.Result ? postsRes.Result : [])
@@ -36,7 +36,7 @@ function Profile({ currentUserState }: { currentUserState: CurrentUserState }) {
   }, [])
   return (
     <Container>
-      <Card>
+      <Card color='white'>
         <CardHeader
           avatar={
             loading ? (

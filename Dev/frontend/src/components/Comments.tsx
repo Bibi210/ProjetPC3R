@@ -162,7 +162,7 @@ function Comments({
                       <KeyboardArrowUp
                         color={
                           isCommentUpVoted(comment.Id, currentUserState)
-                            ? 'error'
+                            ? 'secondary'
                             : 'action'
                         }
                       />
@@ -176,7 +176,7 @@ function Comments({
                       <KeyboardArrowDown
                         color={
                           isCommentDownVoted(comment.Id, currentUserState)
-                            ? 'error'
+                            ? 'secondary'
                             : 'action'
                         }
                       />
