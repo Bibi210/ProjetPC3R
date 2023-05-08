@@ -31,7 +31,7 @@ import {
 function Post({
   currentUserState,
   loading,
-  post: postProp,
+  post,
   setRefresh,
   randomMode,
 }: PostComponentProps) {
@@ -39,7 +39,7 @@ function Post({
   const [saveMenuAnchor, setSaveMenuAnchor] = useState<null | HTMLElement>(null)
   const [savingCaption, setSavingCaption] = useState('')
   const [showComments, setShowComments] = useState(false)
-  const [post, setPost] = useState(postProp)
+  const [votes, setVotes] = useState(post.Upvotes)
   let openSaveMenu = Boolean(saveMenuAnchor)
 
   function handleSaveBtnClick(event: React.MouseEvent<HTMLElement>) {
@@ -177,7 +177,7 @@ function Post({
                     onClick={() =>
                       handleVotePost(
                         post,
-                        setPost,
+                        setVotes,
                         currentUserState,
                         isPostUpVoted(post.Id, currentUserState) ? 0 : 1
                       )
@@ -196,13 +196,13 @@ function Post({
                     variant='body1'
                     style={{ marginTop: '10px' }}
                   >
-                    {post.Upvotes}
+                    {votes}
                   </Typography>
                   <IconButton
                     onClick={() => {
                       handleVotePost(
                         post,
-                        setPost,
+                        setVotes,
                         currentUserState,
                         isPostDownVoted(post.Id, currentUserState) ? 0 : -1
                       )

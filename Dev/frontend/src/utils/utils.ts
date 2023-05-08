@@ -72,15 +72,15 @@ export function handleUpVotePost(post: Post, currentUserState: CurrentUserState,
   })
 }
 
-export function handleVotePost(post: Post, setPost: Function | null, currentUserState: CurrentUserState, value: 1 | 0 | -1) {
+export function handleVotePost(post: Post, setVotes: Function | null, currentUserState: CurrentUserState, value: 1 | 0 | -1) {
   votePost(post.Id, value).then(res => {
-    if (res.Success && currentUserState.get && setPost) {
+    if (res.Success && currentUserState.get) {
       getPost(post.Id).then(postRes => {
         if (!postRes.Success) {
           alert(postRes.Message)
           console.error(postRes.Message)
         }
-        setPost(postRes.Result)
+        if (setVotes) setVotes(postRes.Result.Upvotes)
         currentUserState.refresh()
       })
     }
