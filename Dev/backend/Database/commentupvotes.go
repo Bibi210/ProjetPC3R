@@ -54,12 +54,21 @@ func SaveCommentUpvotes(c *sql.DB, upvoter string, commentID int, vote int) Help
 		if value == vote {
 			Helpers.OnlyServerError("Already Voted")
 		}
-		_, err = c.Exec("DELETE FROM CommentUpvotes WHERE Upvoter = ? AND Comment = ?", upvoterID, commentID)
-		Helpers.ServerRuntimeError("Error While Deleting CommentUpvotes", err)
+		_, err = c.Exec("UPDATE CommentUpvotes SET Vote = ?, Date = ? WHERE Upvoter = ? AND Comment = ?",
+			vote,
+			Helpers.FormatTime(time.Now()),
+			upvoterID,
+			commentID)
+		Helpers.ServerRuntimeError("Error While Updating CommentUpvotes", err)
+	} else {
+		_, err = c.Exec("INSERT INTO CommentUpvotes (Comment, Upvoter, Date, Vote) VALUES (?, ?, ?, ?)",
+			commentID,
+			upvoterID,
+			Helpers.FormatTime(time.Now()),
+			vote)
+		Helpers.ServerRuntimeError("Error While Saving CommentUpvotes", err)
 	}
 
-	_, err = c.Exec("INSERT INTO CommentUpvotes (Comment, Upvoter, Date, Vote) VALUES (?, ?, ?, ?)", commentID, upvoterID, Helpers.FormatTime(time.Now()), vote)
-	Helpers.ServerRuntimeError("Error While Saving CommentUpvotes", err)
 	return Helpers.ResponseUpvoteJSON{Acceptedvalue: vote, PostVotes: GetCommentVotesTotal(c, commentID)}
 }
 
@@ -75,14 +84,12 @@ func GetCommentUpvotes(c *sql.DB, commentID int) []saved_commentupvotes_row {
 }
 
 func GetCommentVotesTotal(c *sql.DB, commentID int) int {
-	rows, err := c.Query("SELECT Vote FROM CommentUpvotes WHERE Comment = ?", commentID)
+	rows, err := c.Query("SELECT SUM(Vote) FROM CommentUpvotes WHERE Comment = ?", commentID)
 	Helpers.ServerRuntimeError("Error While Querying CommentUpvotes", err)
 	defer rows.Close()
 	var result int = 0
 	if rows.Next() {
-		var value int
-		Helpers.ServerRuntimeError("Error While Reading Row", rows.Scan(&value))
-		result += value
+		Helpers.ServerRuntimeError("Error While Reading Row", rows.Scan(&result))
 	}
 	return result
 }
