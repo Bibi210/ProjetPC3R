@@ -259,7 +259,7 @@ function SearchResultPosts({
                   <KeyboardArrowUp
                     color={
                       isPostUpVoted(post.Id, currentUserState)
-                        ? 'primary'
+                        ? 'secondary'
                         : 'action'
                     }
                   />
@@ -277,7 +277,7 @@ function SearchResultPosts({
                   <KeyboardArrowDown
                     color={
                       isPostDownVoted(post.Id, currentUserState)
-                        ? 'primary'
+                        ? 'secondary'
                         : 'action'
                     }
                   />

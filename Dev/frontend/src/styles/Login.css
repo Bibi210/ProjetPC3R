@@ -1,8 +1,8 @@
+html {
+    background-color: black;
+}
 .main-container {
     margin-top: 100px;
-    background-color: #E3F2FD;
-    padding: 50px 0;
-    border-radius: 25px;
 }
 
 .input-container {
@@ -10,5 +10,4 @@
     flex-direction: column;
     gap: 50px;
     justify-content: space-around;
-    padding: 50px 0;
 }

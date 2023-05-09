@@ -1,5 +1,7 @@
 import {
   Button,
+  Card,
+  CardContent,
   CircularProgress,
   Collapse,
   Container,
@@ -95,81 +97,87 @@ function Login() {
   return (
     <Container className='main-container'>
       {loggedIn && <Navigate to='/' />}
-      <Typography variant='h2'>
-        {' '}
-        {createAccountMode ? 'Create an account' : 'Login'}{' '}
-      </Typography>
-      <div className='errors'>
-        {notifications.map((n) => (
-          <Collapse appear={true} key={n.id} in={n.show}>
-            <Button
-              fullWidth
-              variant='contained'
-              onClick={() =>
-                setNotifications(
-                  notifications.filter((notif) => notif.id != n.id)
-                )
-              }
-              style={{
-                backgroundColor:
-                  n.type == NotificationType.ERROR ? '#EF5350' : '#3F51B5',
-                marginBottom: '10px',
-              }}
-            >
-              {n.msg}
-            </Button>
-          </Collapse>
-        ))}
-      </div>
-      <div className='input-container'>
-        <TextField
-          label='username'
-          variant='filled'
-          error={login == ''}
-          helperText={login == '' ? 'username cannot be empty' : ''}
-          onChange={(e) => setLogin(e.currentTarget.value)}
-        />
-        <TextField
-          label='password'
-          type='password'
-          variant='filled'
-          error={password == ''}
-          helperText={password == '' ? 'password cannot be empty' : ''}
-          onChange={(e) => setPassword(e.currentTarget.value)}
-        />
-        {createAccountMode && (
-          <TextField
-            label='retype password'
-            type='password'
-            variant='filled'
-            error={password2 == ''}
-            helperText={password2 == '' ? 'please re enter your password' : ''}
-            onChange={(e) => setPassword2(e.currentTarget.value)}
-          />
-        )}
-      </div>
-      <Button
-        className='login-btn'
-        variant='contained'
-        onClick={() => validateBeforeRequest(login, password)}
-      >
-        {sendingRequest ? (
-          <CircularProgress />
-        ) : createAccountMode ? (
-          'Create account'
-        ) : (
-          'Login'
-        )}
-      </Button>
-      <Button
-        className='sign-up-btn'
-        style={{ textTransform: 'none' }}
-        onClick={() => setCreateAccountMode(!createAccountMode)}
-      >
-        {createAccountMode
-          ? 'Already have an account? Login'
-          : 'Create a new account'}
-      </Button>
+      <Card>
+        <CardContent style={{ padding: '50px' }}>
+          <Typography variant='h2' color='text.primary' marginBottom='30px'>
+            {' '}
+            {createAccountMode ? 'Create an account' : 'Login'}{' '}
+          </Typography>
+          <div className='errors'>
+            {notifications.map((n) => (
+              <Collapse appear={true} key={n.id} in={n.show}>
+                <Button
+                  fullWidth
+                  variant='contained'
+                  onClick={() =>
+                    setNotifications(
+                      notifications.filter((notif) => notif.id != n.id)
+                    )
+                  }
+                  style={{
+                    backgroundColor:
+                      n.type == NotificationType.ERROR ? '#EF5350' : '#3F51B5',
+                    marginBottom: '10px',
+                  }}
+                >
+                  {n.msg}
+                </Button>
+              </Collapse>
+            ))}
+          </div>
+          <div className='input-container' style={{marginBottom: "50px"}}>
+            <TextField
+              label='username'
+              variant='filled'
+              error={login == ''}
+              helperText={login == '' ? 'username cannot be empty' : ''}
+              onChange={(e) => setLogin(e.currentTarget.value)}
+            />
+            <TextField
+              label='password'
+              type='password'
+              variant='filled'
+              error={password == ''}
+              helperText={password == '' ? 'password cannot be empty' : ''}
+              onChange={(e) => setPassword(e.currentTarget.value)}
+            />
+            {createAccountMode && (
+              <TextField
+                label='retype password'
+                type='password'
+                variant='filled'
+                error={password2 == ''}
+                helperText={
+                  password2 == '' ? 'please re enter your password' : ''
+                }
+                onChange={(e) => setPassword2(e.currentTarget.value)}
+              />
+            )}
+          </div>
+          <Button
+            className='login-btn'
+            variant='contained'
+            onClick={() => validateBeforeRequest(login, password)}
+          >
+            {sendingRequest ? (
+              <CircularProgress />
+            ) : createAccountMode ? (
+              'Create account'
+            ) : (
+              'Login'
+            )}
+          </Button>
+          <Button
+            className='sign-up-btn'
+            style={{ textTransform: 'none' }}
+            onClick={() => setCreateAccountMode(!createAccountMode)}
+          >
+            {createAccountMode
+              ? 'Already have an account? Login'
+              : 'Create a new account'}
+          </Button>
+        </CardContent>
+      </Card>
     </Container>
   )
 }

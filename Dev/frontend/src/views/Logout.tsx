@@ -23,17 +23,25 @@ function Logout() {
   return (
     <Container className='main-container'>
       {callingServer && !loggedOut && (
-        <Typography variant='h2'>Logging out</Typography>
+        <Typography variant='h2' color='text.primary'>
+          Logging out
+        </Typography>
       )}
       {!callingServer && loggedOut ? (
-        <Typography variant='h2'>Logout successful</Typography>
+        <Typography variant='h2' color='text.primary'>
+          Logout successful
+        </Typography>
       ) : (
         <>
-          <Typography variant='h2'>Error while logging out</Typography>
+          <Typography variant='h2' color='text.primary'>
+            Error while logging out
+          </Typography>
           <Button
             fullWidth
             variant='contained'
-            style={{ backgroundColor: '#EF5350' }}
+            style={{
+              marginTop: "50px"
+            }}
           >
             {error}
           </Button>

@@ -132,3 +132,8 @@ export async function voteComment(commentId: number, value: number): Promise<Ser
   })
   return await res.json()
 }
+
+export async function deleteAccount(): Promise<ServerResponse<any>> {
+  let res = await fetch(window.location.origin + "/api/delete_account", { method: "DELETE", })
+  return await res.json()
+}

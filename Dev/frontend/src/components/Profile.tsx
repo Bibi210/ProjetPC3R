@@ -7,22 +7,24 @@ import {
   CircularProgress,
   Container,
   Grid,
-  List,
-  ListItem,
   Typography,
 } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Post from './Post'
 import { CurrentUserState, Post as PostType } from '../utils/types'
-import { getPosts } from '../utils/serverFunctions'
+import { deleteAccount, getPosts } from '../utils/serverFunctions'
 
 function Profile({ currentUserState }: { currentUserState: CurrentUserState }) {
   const [loading, setLoading] = useState(false)
   const [posts, setPosts] = useState<PostType[]>([])
 
   useEffect(() => {
-    if (currentUserState && currentUserState.get && currentUserState.get.Posts) {
+    if (
+      currentUserState &&
+      currentUserState.get &&
+      currentUserState.get.Posts
+    ) {
       getPosts(currentUserState.get.Posts).then((postsRes) => {
         if (postsRes.Success) {
           setPosts(postsRes.Result ? postsRes.Result : [])
@@ -36,7 +38,7 @@ function Profile({ currentUserState }: { currentUserState: CurrentUserState }) {
   }, [])
   return (
     <Container>
-      <Card color='white'>
+      <Card color='white' variant='outlined' >
         <CardHeader
           avatar={
             loading ? (
@@ -69,6 +71,15 @@ function Profile({ currentUserState }: { currentUserState: CurrentUserState }) {
                     <Button
                       variant='contained'
                       style={{ backgroundColor: '#EF5350', color: 'white' }}
+                      onClick={() => {
+                        if (
+                          confirm(
+                            'Are you sure you want to delete your account?'
+                          )
+                        ) {
+                          deleteAccount()
+                        }
+                      }}
                     >
                       Delete account
                     </Button>
@@ -88,26 +99,26 @@ function Profile({ currentUserState }: { currentUserState: CurrentUserState }) {
           {loading ? (
             <CircularProgress />
           ) : currentUserState && currentUserState.get ? (
-            <List>
-              {posts.length == 0 ? (
-                <Grid container justifyContent='center'>
-                  <Grid item>
-                    <Typography variant='h5'>Nothing here yet</Typography>
-                  </Grid>
+            posts.length == 0 ? (
+              <Grid container justifyContent='center'>
+                <Grid item>
+                  <Typography variant='h5'>Nothing here yet</Typography>
                 </Grid>
-              ) : (
-                posts.map((post: PostType) => (
-                  <ListItem key={post.Url + post.Creator + post.Date}>
+              </Grid>
+            ) : (
+              <Grid container justifyContent='center' marginBottom={4}>
+                {posts.map((post: PostType) => (
+                  <Grid item key={post.Id}>
                     <Post
                       currentUserState={currentUserState}
                       loading={false}
                       post={post}
                       randomMode={false}
                     />
-                  </ListItem>
-                ))
-              )}
-            </List>
+                  </Grid>
+                ))}
+              </Grid>
+            )
           ) : (
             <Link to='/login'>
               <Button
