@@ -171,8 +171,6 @@ Pour le bundler et outil de construction nous avons utilisé **Vite**, car avec 
 
 ### Les Composants
 #### Main
-<p style="color:red">! ajouter capture ici plus tard !</p>
-
 > code source dans `Dev/frontend/src/views/Main.tsx`
 
 Cela est la page principale de notre application et le responsable de la gestion du profil courant et de la gestions des onglets.
@@ -188,14 +186,14 @@ Les quatres routes `/`, `/top`, `random` et `profile` nous mène tous vers le m�
 Le composant `Main` affiche l'onglet corréspondant à la valeur de ce paramètre et en utilisant le hook `useNavigate` de React Router, change la route de l'application quand on change d'onglet, sans recharger la page.
 
 #### Top posts
-<p style="color:red">! ajouter capture ici plus tard !</p>
+![](Figures/Top%20Posts.png)
 
 > code source dans `Dev/frontend/src/components/TopPosts.tsx`
 
 Dans cet onglets, d'abord, nous récupérons une liste d'ids des posts avec le plus de vote. La taille de cette liste est donnée dans l'appel AJAX, cela nous permet de récupérer plus de posts quand on en a besoin. Nous avons choisi de mettre 10 pour cette taille. Ensuite, nous récupérons les détails de ces posts avec une requête AJAX et nous créons une instance du composant `Post` pour afficher les détails de chaque post récupéré. Nous avons aussi un bouton `Load more posts` qui refait ces deux derniers appels en ajoutant 10 à la taille de la liste d'ids.
 
 ##### Le Composant Post
-<p style="color:red">! ajouter capture ici plus tard !</p>
+![](Figures/Random%20Post.png)
 
 > code source dans `Dev/frontend/src/components/Post.tsx`
 
@@ -211,7 +209,7 @@ Ce composant a deux modes d'affichage qui dépends de paramètres `randomMode`.
 **Note** : le contenu de l'onglet `Random Post` est une instance de ce composant avec le paramètre `randomMode` mis à vrai.
 
 ##### Le Composant Comments
-<p style="color:red">! ajouter capture ici plus tard !</p>
+![](Figures/Comments.png)
 
 > code source dans `Dev/frontend/src/components/Comments.tsx`
 
@@ -220,7 +218,7 @@ S'il y a un profil actuellement connecté, il affiche aussi un champ de texte av
 
 
 #### Search
-<p style="color:red">! ajouter capture ici plus tard !</p>
+![](Figures/Search.png)
 
 > code source dans `Dev/frontend/src/components/Search.tsx`
 
@@ -228,21 +226,21 @@ Pour afficher les résultats des recherches, nous avons créé deux nouveaux com
 En revanche, nous pensons que cela était mieux de réutiliser le composant des post pour les posts et de créer un paramètre avec lequel on peut décider le style, et de créer un nouveau composant pour les profils trouvé, ce qu'on aurait pu utiliser dans l'onglet `Profile` aussi. À cause du manque du temps nous n'avons pas pu réaliser ce changement.
 
 #### Profile
-<p style="color:red">! ajouter capture ici plus tard !</p>
+![](Figures/Profile.png)
 
 > code source dans `Dev/frontend/src/components/Profile.tsx`
 
 Cet onglet permet de voir les posts que le profil courant a sauvegardé, de supprimer son compte et de se déconnecter. Tous les posts affichés sont des instances du composant `Post` et les informations concernant le profile courant sont récupérés depuis le composant `Main`
 
 #### Login
-<p style="color:red">! ajouter capture ici plus tard !</p>
+![](Figures/Login.png)
 
 > code source dans `Dev/frontend/src/views/Login.tsx`
 
 Le fonctionnement de cet composant d'afficher les champs nécessaires pour se connecter ou créer un nouveau compte, mais aussi de valider si tous les champs avant d'envoyer la requête pour se connecter / créer un nouveau compte. La gestion des modes Login / Créer un compte sont réaliser par un hook `useState` de React.
 
 #### Logout
-<p style="color:red">! ajouter capture ici plus tard !</p>
+![](Figures/Logout.png)
 
 > code source dans `Dev/frontend/src/views/Logout.tsx`
 
