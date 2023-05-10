@@ -12,12 +12,12 @@ monofont: Menlo
 fontsize: 12pt
 urlcolor: NavyBlue
 include-before: | # Texte avant la table des matières
-    \newpage
+    \pagebreak
 numbersections: true # Numéros de sections
 toc: true # Table des matières
 tableofcontents: true # Table des matières
 ---
-\newpage
+\pagebreak
 
 # Description L'application
 **ShitPostLand** est un mini réseau social centré autour des shitposts. L'application permettra à ses utilisateurs de créer des comptes, de se connecter, de publier des messages, de commenter des messages, d'upvoter et downvoter des contenus.
@@ -60,11 +60,7 @@ Le visiteur peut également observer des posts aléatoires
 
 L'utilisateur non connecté à lui accès à toutes les fonctionnalités de l'application.
 
-## Interface
-
-- A remplir par des captures des fenêtres de l'application
-
-\newpage
+\pagebreak
 
 # Architecture
 
@@ -180,24 +176,25 @@ Le contenu de chaque onglet est un composant séparé. Comme toutes les interact
 
 Comme nous avons utilisé le hook `useState` de React pour stocker le profil courant, au cas où de changement dans les donnée du profil, tous les composants nécessaires vont réaliser un nouveau rendu. Cela permet d'avoir la même instance de profil dans tous les composants qui dépendent de cela sans un appel au backend pour chaque composant.
 
+\pagebreak
+
 ##### React Router et les onglets
 En utilisant `React Router`, nous avons réussi à manipuler les routes de notre application en changeant les onglets sans recharger de page. La définition des toutes les routes possibles depuis le frontend est faite dans le point d'entrée de notre application : `Dev/frontend/src/app.tsx`.
 Les quatres routes `/`, `/top`, `random` et `profile` nous mène tous vers le même composants `Main`, mais avec un paramètre `tab` différent.
 Le composant `Main` affiche l'onglet corréspondant à la valeur de ce paramètre et en utilisant le hook `useNavigate` de React Router, change la route de l'application quand on change d'onglet, sans recharger la page.
 
 #### Top posts
-![](Figures/Top%20Posts.png)
-
-> code source dans `Dev/frontend/src/components/TopPosts.tsx`
 
 Dans cet onglets, d'abord, nous récupérons une liste d'ids des posts avec le plus de vote. La taille de cette liste est donnée dans l'appel AJAX, cela nous permet de récupérer plus de posts quand on en a besoin. Nous avons choisi de mettre 10 pour cette taille. Ensuite, nous récupérons les détails de ces posts avec une requête AJAX et nous créons une instance du composant `Post` pour afficher les détails de chaque post récupéré. Nous avons aussi un bouton `Load more posts` qui refait ces deux derniers appels en ajoutant 10 à la taille de la liste d'ids.
 
-##### Le Composant Post
-![](Figures/Random%20Post.png)
+![`Dev/frontend/src/components/TopPosts.tsx`](Figures/Top%20Posts.png){ width=75% }
 
-> code source dans `Dev/frontend/src/components/Post.tsx`
+\pagebreak
+
+#### Le Composant Post
 
 Ce composant a deux modes d'affichage qui dépends de paramètres `randomMode`.
+
 - Si `randomMode` est vrai, il affiche les boutons `Pass` et `Save` :
   - Le bouton `Pass` charge un nouveau post.
   - Le bouton `Save` créer en prenant le titre que l'utilisateur donne dans le pop-up sauvegarde le post dans le profil de l'utilisateur connecté.
@@ -208,43 +205,47 @@ Ce composant a deux modes d'affichage qui dépends de paramètres `randomMode`.
 
 **Note** : le contenu de l'onglet `Random Post` est une instance de ce composant avec le paramètre `randomMode` mis à vrai.
 
-##### Le Composant Comments
-![](Figures/Comments.png)
+![`Dev/frontend/src/components/Post.tsx`](Figures/Random%20Post.png){ width=75% }
 
-> code source dans `Dev/frontend/src/components/Comments.tsx`
+#### Logout
 
-Ce composant prend en paramètre la liste des commentaires à afficher, récupère le contenu de ces commentaires et les affiche.
-S'il y a un profil actuellement connecté, il affiche aussi un champ de texte avec un bouton pour créer un nouveau commentaire.
+Ce composant envoie une requête vers `/api/logout` et affiche son résultat.
 
+![Logout Page](Figures/Logout.png){ width=65% }
+
+\pagebreak
 
 #### Search
-![](Figures/Search.png)
-
-> code source dans `Dev/frontend/src/components/Search.tsx`
 
 Pour afficher les résultats des recherches, nous avons créé deux nouveaux composants qui prennent la liste d'ids des posts / profils et après ayant récupérées les bonnes données depuis le backend, affiche son contenu.
 En revanche, nous pensons que cela était mieux de réutiliser le composant des post pour les posts et de créer un paramètre avec lequel on peut décider le style, et de créer un nouveau composant pour les profils trouvé, ce qu'on aurait pu utiliser dans l'onglet `Profile` aussi. À cause du manque du temps nous n'avons pas pu réaliser ce changement.
 
-#### Profile
-![](Figures/Profile.png)
+![`Dev/frontend/src/components/Search.tsx`](Figures/Search.png){ width=75% }
 
-> code source dans `Dev/frontend/src/components/Profile.tsx`
+
+#### Profile
 
 Cet onglet permet de voir les posts que le profil courant a sauvegardé, de supprimer son compte et de se déconnecter. Tous les posts affichés sont des instances du composant `Post` et les informations concernant le profile courant sont récupérés depuis le composant `Main`
 
-#### Login
-![](Figures/Login.png)
+![`Dev/frontend/src/components/Profile.tsx`](Figures/Profile.png){ width=75% }
 
-> code source dans `Dev/frontend/src/views/Login.tsx`
+\pagebreak
+
+#### Login
 
 Le fonctionnement de cet composant d'afficher les champs nécessaires pour se connecter ou créer un nouveau compte, mais aussi de valider si tous les champs avant d'envoyer la requête pour se connecter / créer un nouveau compte. La gestion des modes Login / Créer un compte sont réaliser par un hook `useState` de React.
 
-#### Logout
-![](Figures/Logout.png)
+![`Dev/frontend/src/views/Login.tsx`](Figures/Login.png){ width=75% }
 
-> code source dans `Dev/frontend/src/views/Logout.tsx`
 
-Ce composant envoie une requête vers `/api/logout` et affiche son résultat.
+#### Le Composant Comments
+
+Ce composant prend en paramètre la liste des commentaires à afficher, récupère le contenu de ces commentaires et les affiche.
+S'il y a un profil actuellement connecté, il affiche aussi un champ de texte avec un bouton pour créer un nouveau commentaire.
+
+![`Dev/frontend/src/components/Comments.tsx`](Figures/Comments.png){ width=75% }
+
+\pagebreak
 
 ### Composants avec les points d'api qu'ils accèdent
 - `Main`:
@@ -275,7 +276,7 @@ Ce composant envoie une requête vers `/api/logout` et affiche son résultat.
   - `/api/logout`
 
 
-\newpage
+\pagebreak
 
 # Description de l'archive
 
